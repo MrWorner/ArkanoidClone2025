@@ -1,19 +1,20 @@
 ﻿using UnityEngine;
-using UnityEngine.InputSystem; // 1. Подключаем НОВУЮ систему
+using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(SpriteRenderer))]
 public class PaddleController : MonoBehaviour
 {
+    [Header("Настройки Платформы")]
+    [Tooltip("Скорость, с которой платформа следует за пальцем/мышью")]
+    [SerializeField] private float moveSpeed = 15f; // Вот новая переменная!
+
     private Camera _mainCamera;
     private float _yPosition;
     private float _minX;
     private float _maxX;
     private float _paddleHalfWidth;
-
-    // 2. Ссылка на "указатель" (мышь ИЛИ палец)
     private Pointer _pointer;
 
-    // (В прошлый раз я забыл тут скобки '()' )
     void Start()
     {
         _mainCamera = Camera.main;
@@ -23,7 +24,6 @@ public class PaddleController : MonoBehaviour
         _minX = _mainCamera.ViewportToWorldPoint(new Vector3(0, 0, 0)).x + _paddleHalfWidth;
         _maxX = _mainCamera.ViewportToWorldPoint(new Vector3(1, 0, 0)).x - _paddleHalfWidth;
 
-        // 3. Получаем текущий активный "указатель"
         _pointer = Pointer.current;
 
         if (_pointer == null)
@@ -36,25 +36,33 @@ public class PaddleController : MonoBehaviour
     {
         if (_pointer == null) return;
 
-        // 4. ПРОВЕРКА НАЖАТИЯ (Это строка ~40)
-        // Вместо: if (Input.GetMouseButton(0))
         if (_pointer.press.isPressed)
         {
-            // 5. ПОЛУЧЕНИЕ ПОЗИЦИИ
-            // Вместо: Vector3 screenPosition = Input.mousePosition;
-            Vector2 screenPosition = _pointer.position.ReadValue();
+            // --- ЭТА ЧАСТЬ ОСТАЛАСЬ ПРЕЖНЕЙ ---
 
-            // 6. Конвертируем
+            // 1. Получаем позицию пальца/мыши
+            Vector2 screenPosition = _pointer.position.ReadValue();
             Vector3 worldPosition = _mainCamera.ScreenToWorldPoint(screenPosition);
 
-            // 7. Ограничиваем
+            // 2. Вычисляем целевую X-координату
             float targetX = Mathf.Clamp(worldPosition.x, _minX, _maxX);
 
-            // 8. Применяем
-            transform.position = new Vector3(
+            // --- А ЭТА ЧАСТЬ ТЕПЕРЬ НОВАЯ ---
+
+            // 3. Создаем ПОЛНУЮ целевую позицию
+            Vector3 targetPosition = new Vector3(
                 targetX,
                 _yPosition,
                 transform.position.z
+            );
+
+            // 4. Плавно ДВИГАЕМСЯ к цели, а не телепортируемся
+            // (Time.deltaTime делает движение плавным 
+            //  независимо от FPS)
+            transform.position = Vector3.MoveTowards(
+                transform.position, // Откуда
+                targetPosition,     // Куда
+                moveSpeed * Time.deltaTime // С какой скоростью
             );
         }
     }
