@@ -67,7 +67,6 @@ public class BallController : MonoBehaviour
         float startX = Random.Range(0f, 1f) > 0.5f ? 1f : -1f;
         Vector2 direction = new Vector2(startX, 1f).normalized;
 
-        // rb.velocity = direction * initialSpeed; // <-- УСТАРЕВШЕЕ
         rb.linearVelocity = direction * initialSpeed; // ИСПРАВЛЕНО
     }
 
