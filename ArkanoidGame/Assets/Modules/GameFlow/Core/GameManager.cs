@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections; // Для корутин (задержек)
+using System.Collections;
 
 public class GameManager : MonoBehaviour
 {
@@ -28,7 +28,7 @@ public class GameManager : MonoBehaviour
 
     void Awake()
     {
-        // Настройка Singleton
+        Debug.Log("GameManager: Awake() вызван.");
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -39,8 +39,15 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        // 1. Подписываемся на "сигнал" от кирпичей
-        // (Мы уже создали этот event в Brick.cs)
+        Debug.Log("GameManager: Start() вызван.");
+
+        // --- НОВЫЕ ПРОВЕРКИ ---
+        // Это самая важная часть. Мы проверяем ссылки ДО того, как их использовать.
+        if (uiManager == null) { Debug.LogError("GameManager ОШИБКА: 'Ui Manager' НЕ НАЗНАЧЕН в инспекторе!"); }
+        if (ball == null) { Debug.LogError("GameManager ОШИБКА: 'Ball' НЕ НАЗНАЧЕН в инспекторе!"); }
+        if (levelManager == null) { Debug.LogError("GameManager ОШИБКА: 'Level Manager' НЕ НАЗНАЧЕН в инспекторе!"); }
+        // -----------------------
+
         Brick.OnAnyBrickDestroyed += HandleBrickDestroyed;
 
         StartNewGame();
@@ -48,15 +55,23 @@ public class GameManager : MonoBehaviour
 
     void StartNewGame()
     {
+        Debug.Log("GameManager: StartNewGame() вызван.");
         CurrentLives = startLives;
         CurrentScore = 0;
         _currentLevel = 1;
 
-        // Обновляем UI
-        uiManager.UpdateLives(CurrentLives);
-        uiManager.UpdateScore(CurrentScore);
+        // Добавляем проверку перед использованием
+        if (uiManager != null)
+        {
+            uiManager.UpdateLives(CurrentLives);
+            uiManager.UpdateScore(CurrentScore);
+        }
+        else
+        {
+            Debug.LogError("GameManager: Не могу обновить UI, 'uiManager' = null.");
+            return; // Прерываем, т.к. игра сломана
+        }
 
-        // Строим первый уровень
         StartCoroutine(LoadLevel(_currentLevel));
     }
 
@@ -66,6 +81,7 @@ public class GameManager : MonoBehaviour
     public void SetBrickCount(int count)
     {
         _activeBrickCount = count;
+        Debug.Log($"GameManager: Уровень построен, кирпичей: {count}");
     }
 
     /// <summary>
@@ -73,15 +89,15 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void HandleBrickDestroyed()
     {
-        // 1. Даем очки (Запрос #3)
+        // 1. Даем очки
         CurrentScore += pointsPerBrick;
-        uiManager.UpdateScore(CurrentScore);
+        if (uiManager != null) uiManager.UpdateScore(CurrentScore);
 
-        // 2. Проверяем, не последний ли это кирпич
+        // 2. Проверяем победу
         _activeBrickCount--;
         if (_activeBrickCount <= 0)
         {
-            // 3. Победа! (Запрос #2)
+            Debug.Log("GameManager: ПОБЕДА! Загрузка следующего уровня...");
             _currentLevel++;
             StartCoroutine(LoadLevel(_currentLevel));
         }
@@ -92,23 +108,21 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void HandleBallLost()
     {
-        // 1. Проверяем опцию разработчика (Запрос #1)
         if (ignoreBottomWall) return;
 
         CurrentLives--;
-        uiManager.UpdateLives(CurrentLives);
+        Debug.Log($"GameManager: Жизнь потеряна. Осталось: {CurrentLives}");
+        if (uiManager != null) uiManager.UpdateLives(CurrentLives);
 
         if (CurrentLives <= 0)
         {
-            // 2. Game Over (Запрос #1)
-            uiManager.ShowGameOver(true);
-            Time.timeScale = 0f; // "Замораживаем" игру
+            Debug.Log("GameManager: GAME OVER.");
+            if (uiManager != null) uiManager.ShowGameOver(true);
+            Time.timeScale = 0f;
         }
         else
         {
-            // 3. Возрождаем мяч (Запрос #1)
-            ball.ResetMode();
-            // (BallController сам запустит корутину задержки)
+            if (ball != null) ball.ResetMode();
         }
     }
 
@@ -117,23 +131,41 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private IEnumerator LoadLevel(int level)
     {
-        // "Прячем" мяч, чтобы он не летал во время стройки
+        Debug.Log($"GameManager: LoadLevel({level}) - Начало загрузки...");
+
+        // 1. Проверяем мяч
+        if (ball == null)
+        {
+            Debug.LogError("GameManager: Не могу спрятать 'ball', 'ball' = null.");
+            yield break; // Прерываем корутину
+        }
         ball.ResetMode();
         ball.gameObject.SetActive(false);
 
-        // 1. Показываем черный экран (Запрос #2)
+        // 2. Проверяем UI
+        if (uiManager == null)
+        {
+            Debug.LogError("GameManager: Не могу показать 'Level Transition', 'uiManager' = null.");
+            yield break; // Прерываем корутину
+        }
         uiManager.ShowLevelTransition($"Level {level}");
+        Debug.Log("GameManager: Показываю экран 'Level 1'");
+
         yield return new WaitForSeconds(2f); // Ждем 2 сек
 
-        // 2. Строим
-        levelManager.BuildLevel(); // Он сам посчитает кирпичи и вызовет SetBrickCount
+        // 3. Проверяем LevelManager
+        if (levelManager == null)
+        {
+            Debug.LogError("GameManager: Не могу построить уровень, 'levelManager' = null.");
+            yield break; // Прерываем корутину
+        }
+        levelManager.BuildLevel();
 
-        // 3. Убираем черный экран
         uiManager.HideLevelTransition();
 
-        // 4. "Включаем" мяч
         ball.gameObject.SetActive(true);
-        ball.ResetMode(); // Снова, чтобы он прилип к ракетке
+        ball.ResetMode(); // ResetMode() ТЕПЕРЬ сам запускает таймер
+        Debug.Log($"GameManager: LoadLevel({level}) - Загрузка завершена. Мяч на ракетке.");
     }
 
     // Не забываем отписаться

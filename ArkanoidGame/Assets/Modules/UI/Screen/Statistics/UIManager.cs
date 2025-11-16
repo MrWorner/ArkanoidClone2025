@@ -12,7 +12,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject levelTransitionScreen;
     [SerializeField] private TextMeshProUGUI levelTransitionText;
 
-    void Start()
+    void Awake()
     {
         // Прячем все экраны при старте
         gameOverScreen.SetActive(false);
@@ -36,12 +36,15 @@ public class UIManager : MonoBehaviour
 
     public void ShowLevelTransition(string text)
     {
+
+        Debug.Log("<color=orange>IT WORKS!</color>", this);
         levelTransitionText.text = text;
         levelTransitionScreen.SetActive(true);
     }
 
     public void HideLevelTransition()
     {
+        Debug.Log("<color=red>IT WORKS!</color>", this);
         levelTransitionScreen.SetActive(false);
     }
 }

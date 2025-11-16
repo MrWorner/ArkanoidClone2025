@@ -10314,10 +10314,6 @@ PrefabInstance:
       propertyPath: levelManager
       value: 
       objectReference: {fileID: 100108099}
-    - target: {fileID: 4527935324743154748, guid: 7fe4eb077c4c6ad4b8335bfbb581f801, type: 3}
-      propertyPath: ignoreBottomWall
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 4889334086753195399, guid: 7fe4eb077c4c6ad4b8335bfbb581f801, type: 3}
       propertyPath: m_LocalPosition.x
       value: 4.31379
