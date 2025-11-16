@@ -1,0 +1,2 @@
+C:\GIT_PROJECTS\MrWorner\ArkanoidClone2025\ArkanoidGame\Library\Bee\Android\Prj\Mono2x\Gradle\unityLibrary\src\main\cpp\CMakeLists.txt
+C:\GIT_PROJECTS\MrWorner\ArkanoidClone2025\ArkanoidGame\Library\Bee\Android\Prj\Mono2x\Gradle\unityLibrary\src\main\cpp\FramePacing\CMakeLists.txt
