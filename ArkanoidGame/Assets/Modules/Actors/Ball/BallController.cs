@@ -1,43 +1,101 @@
 ﻿using UnityEngine;
+using System.Collections;
 
-// Требуем, чтобы на этом объекте был Rigidbody2D, 
-// чтобы скрипт не сломался
 [RequireComponent(typeof(Rigidbody2D))]
 public class BallController : MonoBehaviour
 {
-    [Header("Настройки Мяча")]
-    [Tooltip("Начальная скорость мяча")]
-    [SerializeField] private float initialSpeed = 5f;
+    [Header("Ссылки")]
+    [Tooltip("Перетащите сюда объект 'Paddle'")]
+    [SerializeField] private Transform paddleTransform;
 
-    // Ссылка на компонент Rigidbody2D
+    [Header("Настройки Запуска")]
+    [Tooltip("Начальная скорость мяча")]
+    [SerializeField] private float initialSpeed = 7f;
+    [Tooltip("Задержка перед авто-запуском в секундах")]
+    [SerializeField] private float launchDelay = 3f;
+
     private Rigidbody2D rb;
+    private bool isLaunched = false;
+    private Vector3 paddleOffset;
 
     void Start()
     {
-        // 1. Получаем ссылку на наш Rigidbody2D
         rb = GetComponent<Rigidbody2D>();
 
-        // 2. Запускаем мяч!
+        // "Выключаем" физику, пока мяч не запущен
+        // rb.isKinematic = true; // <-- УСТАРЕВШЕЕ
+        rb.bodyType = RigidbodyType2D.Kinematic; // ИСПРАВЛЕНО
+
+        if (paddleTransform != null)
+        {
+            transform.SetParent(paddleTransform);
+            paddleOffset = transform.localPosition;
+        }
+
+        StartCoroutine(LaunchDelayCoroutine());
+    }
+
+    void Update()
+    {
+        // (Update остается без изменений)
+        if (!isLaunched && paddleTransform != null)
+        {
+            // Позиция обновляется сама, т.к. мы дочерний объект
+        }
+    }
+
+    private IEnumerator LaunchDelayCoroutine()
+    {
+        yield return new WaitForSeconds(launchDelay);
         LaunchBall();
     }
 
-    /// <summary>
-    /// Дает мячу начальный импульс
-    /// </summary>
     private void LaunchBall()
     {
-        // 1. Создаем случайное начальное направление
-        // (x будет случайным числом между -1 и 1, но не 0)
+        if (isLaunched || paddleTransform == null)
+            return;
+
+        isLaunched = true;
+
+        transform.SetParent(null);
+
+        // "Включаем" физику
+        // rb.isKinematic = false; // <-- УСТАРЕВШЕЕ
+        rb.bodyType = RigidbodyType2D.Dynamic; // ИСПРАВЛЕНО
+
+        // Задаем начальный импульс
         float startX = Random.Range(0f, 1f) > 0.5f ? 1f : -1f;
-        // (y всегда будет -1, чтобы мяч летел ВНИЗ к платформе)
-        float startY = -1f;
+        Vector2 direction = new Vector2(startX, 1f).normalized;
 
-        // 2. Создаем вектор направления и "нормализуем" его
-        // (чтобы его длина была равна 1)
-        Vector2 direction = new Vector2(startX, startY).normalized;
+        // rb.velocity = direction * initialSpeed; // <-- УСТАРЕВШЕЕ
+        rb.linearVelocity = direction * initialSpeed; // ИСПРАВЛЕНО
+    }
 
-        // 3. Применяем силу к Rigidbody
-        // (Умножаем направление на скорость, чтобы получить вектор силы)
-        rb.linearVelocity = direction * initialSpeed;
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (isLaunched && collision.gameObject.CompareTag("Paddle"))
+        {
+            CalculateRebound(collision);
+            return;
+        }
+
+        if (collision.gameObject.TryGetComponent(out IDamageable damageable))
+        {
+            damageable.TakeDamage(1);
+        }
+    }
+
+    private void CalculateRebound(Collision2D collision)
+    {
+        Vector3 paddleCenter = collision.transform.position;
+        float paddleWidth = collision.collider.bounds.size.x;
+        Vector3 hitPoint = collision.contacts[0].point;
+        float xOffset = hitPoint.x - paddleCenter.x;
+        float normalizedX = Mathf.Clamp(xOffset / (paddleWidth / 2f), -1f, 1f);
+        Vector2 newDirection = new Vector2(normalizedX, 1f).normalized;
+
+        // Применяем новую скорость
+        // rb.velocity = newDirection * initialSpeed; // <-- УСТАРЕВШЕЕ
+        rb.linearVelocity = newDirection * initialSpeed; // ИСПРАВЛЕНО
     }
 }
