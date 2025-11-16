@@ -1,9 +1,15 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
+// --- НОВОЕ: Подключаем Editor-инструменты ---
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+// ----------------------------------------
+
 public class BrickPool : MonoBehaviour
 {
-    // ---- Singleton (только для Runtime) ----
+    // --- Singleton (только для Runtime) ---
     public static BrickPool Instance { get; private set; }
     // ----------------------------------------
 
@@ -20,8 +26,7 @@ public class BrickPool : MonoBehaviour
 
     void Awake()
     {
-        // Настраиваем Singleton
-        if (Instance != null)
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
@@ -29,9 +34,9 @@ public class BrickPool : MonoBehaviour
         Instance = this;
 
         // ВАЖНО: При старте игры, "знакомим" все кирпичи 
-        // (созданные в редакторе) с этим пулом
         foreach (Brick brick in _allManagedBricks)
         {
+            if (brick == null) continue; // Пропускаем, если ссылка "потерялась"
             brick.Init(this);
             brick.gameObject.SetActive(false); // Прячем все для старта
         }
@@ -42,16 +47,17 @@ public class BrickPool : MonoBehaviour
     /// </summary>
     public Brick GetBrick()
     {
-        // Ищем в списке "спящий" кирпич
         foreach (Brick brick in _allManagedBricks)
         {
+            // Если кирпич был удален вручную в редакторе
+            if (brick == null) continue;
+
             if (!brick.gameObject.activeSelf)
             {
                 brick.gameObject.SetActive(true);
                 return brick;
             }
         }
-
         // Если "спящих" не нашли - создаем новый
         return CreateNewBrick(true);
     }
@@ -71,6 +77,7 @@ public class BrickPool : MonoBehaviour
     {
         foreach (Brick brick in _allManagedBricks)
         {
+            if (brick == null) continue;
             if (brick.gameObject.activeSelf)
             {
                 brick.gameObject.SetActive(false);
@@ -85,7 +92,7 @@ public class BrickPool : MonoBehaviour
     /// </summary>
     public Brick GetBrickEditor()
     {
-        return CreateNewBrick(false);
+        return CreateNewBrick(false); // isRuntime = false
     }
 
     /// <summary>
@@ -93,17 +100,18 @@ public class BrickPool : MonoBehaviour
     /// </summary>
     public void DestroyAllBricksEditor()
     {
+        // Сначала "чистим" список от пустых ссылок
+        _allManagedBricks.RemoveAll(item => item == null);
+
         // Уничтожаем объекты
         foreach (Brick brick in _allManagedBricks)
         {
             if (brick != null)
             {
-                // Используем DestroyImmediate, т.к. мы в редакторе
                 DestroyImmediate(brick.gameObject);
             }
         }
 
-        // Чистим список
         _allManagedBricks.Clear();
     }
 
@@ -118,34 +126,36 @@ public class BrickPool : MonoBehaviour
             return null;
         }
 
-        // Создаем
-        Brick newBrick = Instantiate(brickPrefab, transform);
-        newBrick.gameObject.name = "Brick_" + _allManagedBricks.Count;
+        Brick newBrick;
 
-        // Знакомим с пулом
-        newBrick.Init(this);
-
-        // "Запоминаем"
-        _allManagedBricks.Add(newBrick);
-
-        // Если это runtime, сразу активируем
+        // --- ГЛАВНОЕ ИЗМЕНЕНИЕ ---
         if (isRuntime)
         {
-            newBrick.gameObject.SetActive(true);
+            // В РЕЖИМЕ ИГРЫ: Используем Instantiate
+            newBrick = Instantiate(brickPrefab, transform);
+        }
+        else
+        {
+            // В РЕДАКТОРЕ: Используем PrefabUtility
+#if UNITY_EDITOR
+            newBrick = (Brick)PrefabUtility.InstantiatePrefab(brickPrefab, transform);
+#else
+                // Запасной вариант (не должен вызываться)
+                newBrick = Instantiate(brickPrefab, transform);
+#endif
+        }
+        // -------------------------
+
+        // Общая настройка
+        newBrick.gameObject.name = "Brick_" + _allManagedBricks.Count;
+        newBrick.Init(this); // Знакомим с пулом
+        _allManagedBricks.Add(newBrick); // "Запоминаем"
+
+        if (isRuntime)
+        {
+            newBrick.gameObject.SetActive(true); // Активируем, если в игре
         }
 
         return newBrick;
-    }
-
-    public Transform GetLastActiveBrickTransform()
-    {
-        foreach (Brick brick in _allManagedBricks)
-        {
-            if (brick.gameObject.activeSelf)
-            {
-                return brick.transform;
-            }
-        }
-        return null; // Не найдено
     }
 }
