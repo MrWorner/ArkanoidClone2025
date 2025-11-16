@@ -889,6 +889,10 @@ PrefabInstance:
       value: Ball
       objectReference: {fileID: 0}
     - target: {fileID: 1570393369815119157, guid: 395266af54238694387d72b4917284fa, type: 3}
+      propertyPath: initialSpeed
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 1570393369815119157, guid: 395266af54238694387d72b4917284fa, type: 3}
       propertyPath: paddleTransform
       value: 
       objectReference: {fileID: 753575388}

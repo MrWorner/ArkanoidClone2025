@@ -1,13 +1,18 @@
-﻿using UnityEngine;
+﻿using Sirenix.OdinInspector;
+using UnityEngine;
 
 // Повесьте этот скрипт на ваш 'bottomWall' (зону поражения)
-// Убедитесь, что на нем есть BoxCollider2D (с Auto Tiling)
-// и SpriteRenderer (с Draw Mode = Sliced)
 public class AnchorToBottom : MonoBehaviour
 {
     private Camera _mainCamera;
 
     void Start()
+    {
+        Apply();
+    }
+
+    [Button]
+    private void Apply()
     {
         _mainCamera = Camera.main;
         if (_mainCamera == null)
@@ -19,24 +24,25 @@ public class AnchorToBottom : MonoBehaviour
         // --- 1. Позиционируем стену ---
 
         // Находим позицию НИЖНЕГО ЦЕНТРА экрана (Viewport 0.5, 0)
+        // bottomEdgePos.x будет равен X-координате центра камеры
+        // bottomEdgePos.y будет равен Y-координате дна камеры
         Vector3 bottomEdgePos = _mainCamera.ViewportToWorldPoint(
             new Vector3(0.5f, 0, _mainCamera.nearClipPlane)
         );
 
         // Ставим стену туда
         transform.position = new Vector3(
-            0, // Ставим по центру X
+            bottomEdgePos.x, // ИСПРАВЛЕНО: Используем X из 'bottomEdgePos', а не 0
             bottomEdgePos.y, // Ставим на дно
             transform.position.z
         );
 
         // --- 2. Растягиваем стену ---
 
-        // Считаем полную ширину экрана в "юнитах"
+        // (Этот код у вас уже был правильный)
         float screenWidth = _mainCamera.ViewportToWorldPoint(new Vector3(1, 0, 0)).x -
                             _mainCamera.ViewportToWorldPoint(new Vector3(0, 0, 0)).x;
 
-        // Применяем к SpriteRenderer (BoxCollider подтянется сам)
         SpriteRenderer sr = GetComponent<SpriteRenderer>();
         if (sr != null)
         {
@@ -44,7 +50,6 @@ public class AnchorToBottom : MonoBehaviour
         }
         else
         {
-            // Если нет спрайта, меняем коллайдер напрямую
             BoxCollider2D bc = GetComponent<BoxCollider2D>();
             if (bc != null)
             {

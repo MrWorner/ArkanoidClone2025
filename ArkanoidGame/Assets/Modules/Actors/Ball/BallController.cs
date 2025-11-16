@@ -14,6 +14,12 @@ public class BallController : MonoBehaviour
     [Tooltip("Задержка перед авто-запуском в секундах")]
     [SerializeField] private float launchDelay = 3f;
 
+    // --- НОВОЕ ПОЛЕ ---
+    [Header("Физика")]
+    [Tooltip("Минимальная вертикальная скорость. Спасает от 'горизонтальных' застреваний.")]
+    [SerializeField] private float minVerticalVelocity = 0.5f;
+    // ------------------
+
     private Rigidbody2D rb;
     private bool isLaunched = false;
     private Vector3 paddleOffset;
@@ -21,10 +27,7 @@ public class BallController : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-
-        // "Выключаем" физику, пока мяч не запущен
-        // rb.isKinematic = true; // <-- УСТАРЕВШЕЕ
-        rb.bodyType = RigidbodyType2D.Kinematic; // ИСПРАВЛЕНО
+        rb.bodyType = RigidbodyType2D.Kinematic;
 
         if (paddleTransform != null)
         {
@@ -34,6 +37,37 @@ public class BallController : MonoBehaviour
 
         StartCoroutine(LaunchDelayCoroutine());
     }
+
+    // --- НОВЫЙ МЕТОД ---
+    /// <summary>
+    /// FixedUpdate вызывается в том же ритме, что и физический движок
+    /// </summary>
+    void FixedUpdate()
+    {
+        // 1. Ничего не делаем, если мяч еще не запущен
+        if (!isLaunched)
+        {
+            return;
+        }
+
+        // 2. Получаем текущую скорость
+        Vector2 velocity = rb.linearVelocity;
+
+        // 3. ПРОВЕРКА: Если вертикальная скорость СЛИШКОМ маленькая...
+        if (Mathf.Abs(velocity.y) < minVerticalVelocity)
+        {
+            // 4. ...мы ее "подталкиваем", сохраняя направление
+
+            // Если Y был 0.1 (почти 0, вверх), он станет 0.5
+            // Если Y был -0.1 (почти 0, вниз), он станет -0.5
+            // Если Y был 0, он станет 0.5 (вверх)
+            velocity.y = (velocity.y >= 0) ? minVerticalVelocity : -minVerticalVelocity;
+
+            // 5. Применяем "исправленную" скорость
+            rb.linearVelocity = velocity;
+        }
+    }
+    // ------------------
 
     void Update()
     {
@@ -56,18 +90,12 @@ public class BallController : MonoBehaviour
             return;
 
         isLaunched = true;
-
         transform.SetParent(null);
+        rb.bodyType = RigidbodyType2D.Dynamic;
 
-        // "Включаем" физику
-        // rb.isKinematic = false; // <-- УСТАРЕВШЕЕ
-        rb.bodyType = RigidbodyType2D.Dynamic; // ИСПРАВЛЕНО
-
-        // Задаем начальный импульс
         float startX = Random.Range(0f, 1f) > 0.5f ? 1f : -1f;
         Vector2 direction = new Vector2(startX, 1f).normalized;
-
-        rb.linearVelocity = direction * initialSpeed; // ИСПРАВЛЕНО
+        rb.linearVelocity = direction * initialSpeed;
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -93,8 +121,6 @@ public class BallController : MonoBehaviour
         float normalizedX = Mathf.Clamp(xOffset / (paddleWidth / 2f), -1f, 1f);
         Vector2 newDirection = new Vector2(normalizedX, 1f).normalized;
 
-        // Применяем новую скорость
-        // rb.velocity = newDirection * initialSpeed; // <-- УСТАРЕВШЕЕ
-        rb.linearVelocity = newDirection * initialSpeed; // ИСПРАВЛЕНО
+        rb.linearVelocity = newDirection * initialSpeed;
     }
 }
