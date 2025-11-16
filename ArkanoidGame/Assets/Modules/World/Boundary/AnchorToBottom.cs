@@ -1,60 +1,55 @@
-﻿using Sirenix.OdinInspector;
-using UnityEngine;
+﻿using UnityEngine;
 
-// Повесьте этот скрипт на ваш 'bottomWall' (зону поражения)
+// Этот скрипт все еще "прибивает" себя к низу,
+// но теперь он также работает как ТРИГГЕР
 public class AnchorToBottom : MonoBehaviour
 {
     private Camera _mainCamera;
 
     void Start()
     {
-        Apply();
+        ApplyPosition();
     }
 
-    [Button]
-    private void Apply()
+    private void ApplyPosition()
     {
         _mainCamera = Camera.main;
-        if (_mainCamera == null)
-        {
-            Debug.LogError("AnchorToBottom: Main Camera не найдена!");
-            return;
-        }
+        if (_mainCamera == null) return;
 
-        // --- 1. Позиционируем стену ---
-
-        // Находим позицию НИЖНЕГО ЦЕНТРА экрана (Viewport 0.5, 0)
-        // bottomEdgePos.x будет равен X-координате центра камеры
-        // bottomEdgePos.y будет равен Y-координате дна камеры
         Vector3 bottomEdgePos = _mainCamera.ViewportToWorldPoint(
             new Vector3(0.5f, 0, _mainCamera.nearClipPlane)
         );
 
-        // Ставим стену туда
         transform.position = new Vector3(
-            bottomEdgePos.x, // ИСПРАВЛЕНО: Используем X из 'bottomEdgePos', а не 0
-            bottomEdgePos.y, // Ставим на дно
+            bottomEdgePos.x,
+            bottomEdgePos.y,
             transform.position.z
         );
 
-        // --- 2. Растягиваем стену ---
-
-        // (Этот код у вас уже был правильный)
         float screenWidth = _mainCamera.ViewportToWorldPoint(new Vector3(1, 0, 0)).x -
                             _mainCamera.ViewportToWorldPoint(new Vector3(0, 0, 0)).x;
 
+        // (Код для растягивания спрайта/коллайдера)
         SpriteRenderer sr = GetComponent<SpriteRenderer>();
-        if (sr != null)
-        {
-            sr.size = new Vector2(screenWidth, sr.size.y);
-        }
+        if (sr != null) { sr.size = new Vector2(screenWidth, sr.size.y); }
         else
         {
             BoxCollider2D bc = GetComponent<BoxCollider2D>();
-            if (bc != null)
-            {
-                bc.size = new Vector2(screenWidth, bc.size.y);
-            }
+            if (bc != null) { bc.size = new Vector2(screenWidth, bc.size.y); }
+        }
+    }
+
+    // --- НОВЫЙ МЕТОД ---
+    /// <summary>
+    /// Срабатывает, когда в триггер входит ДРУГОЙ коллайдер
+    /// </summary>
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        // Проверяем, что это "Мяч"
+        if (other.CompareTag("Ball"))
+        {
+            // Говорим "Мозгу", что мы потеряли мяч
+            GameManager.Instance.HandleBallLost();
         }
     }
 }
