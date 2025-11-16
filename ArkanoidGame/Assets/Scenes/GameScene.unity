@@ -9054,6 +9054,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e2a9a17f6bce6a4449fb72c2fb042134, type: 3}
+--- !u!224 &1875217063 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 5829504328101874878, guid: da02eeb2f88b7ad4daec67706e492cde, type: 3}
+  m_PrefabInstance: {fileID: 9049856953552123498}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1892339768 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 36497593529454995, guid: e2a9a17f6bce6a4449fb72c2fb042134, type: 3}
@@ -10375,6 +10380,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1520182292}
     m_Modifications:
+    - target: {fileID: 829117266712870332, guid: 8414a4dcfbedd234ab023830a2ef68e4, type: 3}
+      propertyPath: uiElement
+      value: 
+      objectReference: {fileID: 1875217063}
     - target: {fileID: 4062857119808838887, guid: 8414a4dcfbedd234ab023830a2ef68e4, type: 3}
       propertyPath: m_LocalPosition.x
       value: 1.2371497

@@ -18,11 +18,13 @@ public class BoundaryManager : MonoBehaviour
     [Tooltip("Ссылка на SpriteRenderer правой стены")]
     [SerializeField] private SpriteRenderer rightWall;
 
+    /*
     [Tooltip("Ссылка на SpriteRenderer верхней стены")]
     [SerializeField] private SpriteRenderer topWall;
 
     [Tooltip("Ссылка на SpriteRenderer нижней стены")]
     [SerializeField] private SpriteRenderer bottomWall;
+    */
 
     void Start()
     {
@@ -52,12 +54,13 @@ public class BoundaryManager : MonoBehaviour
         // (1, 0.5) - центр правой границы
         rightWall.transform.position = mainCamera.ViewportToWorldPoint(new Vector3(1, 0.5f, zPos));
 
+        /*
         // (0.5, 1) - центр верхней границы
         topWall.transform.position = mainCamera.ViewportToWorldPoint(new Vector3(0.5f, 1, zPos));
 
         // (0.5, 0) - центр нижней границы
         bottomWall.transform.position = mainCamera.ViewportToWorldPoint(new Vector3(0.5f, 0, zPos));
-
+        */
 
         // --- 2. Растягиваем, СОХРАНЯЯ ТОЛЩИНУ ---
         // Мы меняем .size у SpriteRenderer. 
@@ -69,10 +72,12 @@ public class BoundaryManager : MonoBehaviour
         // Правая стена: Сохраняем X (толщину), меняем Y (длину)
         rightWall.size = new Vector2(rightWall.size.x, screenHeight);
 
+        /*
         // Верхняя стена: Сохраняем Y (толщину), меняем X (длину)
         topWall.size = new Vector2(screenWidth, topWall.size.y);
 
         // Нижняя стена: Сохраняем Y (толщину), меняем X (длину)
         bottomWall.size = new Vector2(screenWidth, bottomWall.size.y);
+        */
     }
 }

@@ -318,7 +318,7 @@ GameObject:
   - component: {fileID: 8721921377921630259}
   - component: {fileID: 2017653382073150680}
   m_Layer: 5
-  m_Name: Text (TMP) (2)
+  m_Name: Text (Lives)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -958,7 +958,7 @@ GameObject:
   - component: {fileID: 1470637221862360852}
   - component: {fileID: 973579447401636177}
   m_Layer: 5
-  m_Name: Text (TMP) (1)
+  m_Name: Text (Level)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1211,7 +1211,7 @@ GameObject:
   - component: {fileID: 978312892956351180}
   - component: {fileID: 4991003811359954433}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: Text (Score)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
