@@ -2,9 +2,9 @@
 using UnityEngine;
 
 /// <summary>
-/// Этот скрипт ОДИН РАЗ при старте игры
-/// идеально выставляет ортографическую камеру так,
-/// чтобы в нее помещалось поле, заданное двумя угловыми точками.
+/// Этот скрипт выставляет ортографическую камеру так,
+/// чтобы _topLeftCorner был в левом-верхнем углу экрана,
+/// а _bottomRightCorner.x - на правом краю экрана.
 /// </summary>
 public class FitCameraToCorners : MonoBehaviour
 {
@@ -12,19 +12,15 @@ public class FitCameraToCorners : MonoBehaviour
     [Tooltip("Объект (пустышка) в левом-верхнем углу игрового поля")]
     [SerializeField] private Transform _topLeftCorner;
 
-    [Tooltip("Объект (пустышка) в правом-нижнем углу игрового поля")]
+    [Tooltip("Объект (пустышка) на правом краю игрового поля")]
     [SerializeField] private Transform _bottomRightCorner;
 
     [Tooltip("Ссылка на игровую камеру. Если null, попытается найти Camera.main")]
     [SerializeField] private Camera _cam;
 
-    [Header("НАСТРОЙКИ")]
-    [Tooltip("Дополнительный отступ (в 'юнитах'), чтобы поле не прилипало к краям")]
-    [SerializeField] private float _padding = 1f;
-
     void Start()
     {
-        // 1. Проверка ссылок
+        // --- (Вся ваша логика Start() остается прежней) ---
         if (_cam == null)
         {
             _cam = Camera.main;
@@ -44,70 +40,50 @@ public class FitCameraToCorners : MonoBehaviour
 
         if (_topLeftCorner == null || _bottomRightCorner == null)
         {
-            Debug.LogError("FitCameraToCorners: Не назначены угловые точки (_topLeftCorner или _bottomRightCorner)!", this);
+            Debug.LogError("FitCameraToCorners: Не назначены угловые точки!", this);
             return;
         }
 
-        // 2. Мгновенная установка камеры
         SetCameraInstant();
     }
 
     [Button]
     public void SetCameraInstant()
     {
-        // Мы используем ВАШИ методы из DynamicDuelCamera,
-        // так как они написаны отлично.
-        float minX = float.MaxValue, maxX = float.MinValue, minY = float.MaxValue, maxY = float.MinValue;
+        // --- НОВАЯ ЛОГИКА РАСЧЕТА ---
 
-        UpdateBoundsWithTransform(_topLeftCorner, ref minX, ref maxX, ref minY, ref maxY);
-        UpdateBoundsWithTransform(_bottomRightCorner, ref minX, ref maxX, ref minY, ref maxY);
+        // 1. Получаем позиции наших "якорей"
+        Vector3 tl_pos = _topLeftCorner.position;
+        Vector3 dr_pos = _bottomRightCorner.position;
 
-        // --- Логика расчета ---
-
-        // 1. Находим центр прямоугольника, который мы хотим видеть
-        // Z-координату берем от камеры, чтобы она не сдвинулась
-        Vector3 center = new Vector3(
-            (minX + maxX) * 0.5f,
-            (minY + maxY) * 0.5f,
-            _cam.transform.position.z
-        );
-
-        // 2. Считаем нужный ортографический размер
-        float distanceX = (maxX - minX) + _padding;
-        float distanceY = (maxY - minY) + _padding;
-
-        // Отношение сторон экрана (ширина / высоту)
+        // 2. Получаем соотношение сторон экрана (ширина / высота)
         float aspectRatio = _cam.aspect;
 
-        // Считаем размер, нужный для охвата по ШИРИНЕ
-        float sizeX = distanceX / aspectRatio / 2f;
-        // Считаем размер, нужный для охвата по ВЫСОТЕ
-        float sizeY = distanceY / 2f;
+        // 3. Вычисляем ШИРИНУ мира, которую мы хотим видеть
+        // (от левого края до правого)
+        float worldWidth = dr_pos.x - tl_pos.x;
 
-        // Ортографический размер камеры - это ПОЛОВИНА ее ВЫСОТЫ.
-        // Мы берем МАКСИМАЛЬНОЕ из двух значений,
-        // чтобы в камеру гарантированно влезло и по ширине, и по высоте.
-        float targetSize = Mathf.Max(sizeX, sizeY);
+        // 4. Вычисляем ОРТО-РАЗМЕР
+        // Орто-размер = (ШиринаМира / СоотношениеСторон) / 2
+        // Это ГАРАНТИРУЕТ, что в экран влезет 
+        // ровно от tl_pos.x до dr_pos.x
+        float newOrthoSize = worldWidth / aspectRatio / 2f;
 
-        // 3. ПРИМЕНЯЕМ МГНОВЕННО
-        _cam.transform.position = center;
-        _cam.orthographicSize = targetSize;
-    }
+        // 5. Вычисляем ПОЗИЦИЮ камеры
 
-    // --- Методы из вашего скрипта DynamicDuelCamera ---
-    // Они идеальны, просто копируем их.
+        // Камера должна быть по центру между левым и правым краем
+        float newCamPosX = (tl_pos.x + dr_pos.x) / 2f;
 
-    private void UpdateBoundsWithTransform(Transform t, ref float minX, ref float maxX, ref float minY, ref float maxY)
-    {
-        if (t == null) return;
-        UpdateBoundsWithPosition(t.position, ref minX, ref maxX, ref minY, ref maxY);
-    }
+        // Камера должна быть СМЕЩЕНА ВНИЗ от верхнего края
+        // ровно на свой (новый) орто-размер
+        float newCamPosY = tl_pos.y - newOrthoSize;
 
-    private void UpdateBoundsWithPosition(Vector3 pos, ref float minX, ref float maxX, ref float minY, ref float maxY)
-    {
-        minX = Mathf.Min(minX, pos.x);
-        maxX = Mathf.Max(maxX, pos.x);
-        minY = Mathf.Min(minY, pos.y);
-        maxY = Mathf.Max(maxY, pos.y);
+        // 6. ПРИМЕНЯЕМ МГНОВЕННО
+        _cam.transform.position = new Vector3(
+            newCamPosX,
+            newCamPosY,
+            _cam.transform.position.z
+        );
+        _cam.orthographicSize = newOrthoSize;
     }
 }
