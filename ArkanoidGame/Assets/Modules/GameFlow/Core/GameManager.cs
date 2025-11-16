@@ -9,7 +9,6 @@ public class GameManager : MonoBehaviour
 
     [Header("Настройки Игры")]
     [SerializeField] private int startLives = 3;
-    [SerializeField] private int pointsPerBrick = 10;
 
     [Header("Для Разработчика")]
     [Tooltip("Если true, мяч не будет 'умирать' при падении")]
@@ -89,15 +88,14 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void HandleBrickDestroyed()
     {
-        // 1. Даем очки
-        CurrentScore += pointsPerBrick;
-        if (uiManager != null) uiManager.UpdateScore(CurrentScore);
+        // 1. Даем очки (Запрос #3)
+        // CurrentScore += pointsPerBrick; // <-- УДАЛИТЕ ЭТУ СТРОКУ
+        // uiManager.UpdateScore(CurrentScore); // <-- УДАЛИТЕ ЭТУ СТРОКУ
 
-        // 2. Проверяем победу
+        // 2. Проверяем, не последний ли это кирпич
         _activeBrickCount--;
         if (_activeBrickCount <= 0)
         {
-            Debug.Log("GameManager: ПОБЕДА! Загрузка следующего уровня...");
             _currentLevel++;
             StartCoroutine(LoadLevel(_currentLevel));
         }
@@ -172,5 +170,14 @@ public class GameManager : MonoBehaviour
     private void OnDestroy()
     {
         Brick.OnAnyBrickDestroyed -= HandleBrickDestroyed;
+    }
+
+    public void AddScore(int amount)
+    {
+        CurrentScore += amount;
+        if (uiManager != null)
+        {
+            uiManager.UpdateScore(CurrentScore);
+        }
     }
 }

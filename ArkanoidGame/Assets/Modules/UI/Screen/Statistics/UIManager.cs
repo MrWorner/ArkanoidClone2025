@@ -36,15 +36,12 @@ public class UIManager : MonoBehaviour
 
     public void ShowLevelTransition(string text)
     {
-
-        Debug.Log("<color=orange>IT WORKS!</color>", this);
         levelTransitionText.text = text;
         levelTransitionScreen.SetActive(true);
     }
 
     public void HideLevelTransition()
     {
-        Debug.Log("<color=red>IT WORKS!</color>", this);
         levelTransitionScreen.SetActive(false);
     }
 }
