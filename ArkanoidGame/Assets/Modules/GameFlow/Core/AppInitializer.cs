@@ -9,7 +9,7 @@ public class AppInitializer : MonoBehaviour
         QualitySettings.vSyncCount = 0;
 
         // 2. Устанавливаем желаемый FPS
-        Application.targetFrameRate = 60;
+        Application.targetFrameRate = 90;
 
         // Важно: Не вызывать OnDemandRendering
         // (это новая настройка, которая может мешать)
