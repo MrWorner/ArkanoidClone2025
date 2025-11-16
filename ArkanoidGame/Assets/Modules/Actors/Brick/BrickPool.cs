@@ -136,4 +136,16 @@ public class BrickPool : MonoBehaviour
 
         return newBrick;
     }
+
+    public Transform GetLastActiveBrickTransform()
+    {
+        foreach (Brick brick in _allManagedBricks)
+        {
+            if (brick.gameObject.activeSelf)
+            {
+                return brick.transform;
+            }
+        }
+        return null; // Не найдено
+    }
 }
