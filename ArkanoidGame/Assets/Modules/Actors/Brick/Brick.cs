@@ -1,23 +1,24 @@
 ﻿using UnityEngine;
-using System; // Нужно для Action<>
+using System;
+using DG.Tweening;
 
 public class Brick : MonoBehaviour, IDamageable
 {
-    // --- ИЗМЕНЕНИЕ 1: Событие теперь передает позицию (Vector3) ---
     public static event Action<Vector3> OnAnyBrickDestroyed;
-    // -------------------------------------------------------------
 
     [SerializeField] private BrickTypeSO _brickType;
     private BrickPool _pool;
     private SpriteRenderer _spriteRenderer;
+    private Collider2D _collider; // Кешируем коллайдер
     private int _currentHealth;
     private bool _isDestroyed = false;
 
-    public BrickTypeSO BrickType { get => _brickType; set => _brickType = value; }
+    public BrickTypeSO BrickType { get => _brickType; }
 
     void Awake()
     {
         _spriteRenderer = GetComponent<SpriteRenderer>();
+        _collider = GetComponent<Collider2D>();
     }
 
     public void Init(BrickPool ownerPool)
@@ -28,29 +29,46 @@ public class Brick : MonoBehaviour, IDamageable
     public void Setup(BrickTypeSO type)
     {
         _brickType = type;
-        if (_spriteRenderer == null) _spriteRenderer = GetComponent<SpriteRenderer>();
 
-        if (_spriteRenderer != null && _brickType != null)
+        // --- СБРОС СОСТОЯНИЯ ДЛЯ ПУЛА (ВАЖНО!) ---
+        // Возвращаем нормальный размер и цвет, так как прошлая анимация их изменила
+        transform.localScale = Vector3.one;
+        transform.rotation = Quaternion.identity; // На всякий случай
+
+        if (_spriteRenderer == null) _spriteRenderer = GetComponent<SpriteRenderer>();
+        if (_spriteRenderer != null)
         {
-            _spriteRenderer.sprite = _brickType.sprite;
-            _spriteRenderer.color = _brickType.color;
+            _spriteRenderer.color = _brickType != null ? _brickType.color : Color.white;
+            if (_brickType != null) _spriteRenderer.sprite = _brickType.sprite;
+            // Сбрасываем альфа-канал, если анимация его меняла
+            Color c = _spriteRenderer.color;
+            c.a = 1f;
+            _spriteRenderer.color = c;
         }
+
+        // Включаем коллайдер обратно
+        if (_collider == null) _collider = GetComponent<Collider2D>();
+        if (_collider != null) _collider.enabled = true;
+        // ------------------------------------------
+
         _currentHealth = _brickType != null ? _brickType.health : 1;
-        _isDestroyed = false; // Сбрасываем флаг при респавне из пула!
+        _isDestroyed = false;
     }
 
     public void TakeDamage(int damageAmount)
     {
-        // 1. Если уже уничтожен или нет типа - выходим
         if (_isDestroyed || _brickType == null) return;
-
-        if (_brickType.isIndestructible) return;
+        if (_brickType.isIndestructible)
+        {
+            // Бонус: Анимация "дрожания" для неубиваемого блока
+            transform.DOShakePosition(0.2f, 0.1f, 10, 90, false, true);
+            return;
+        }
 
         _currentHealth -= damageAmount;
 
         if (_currentHealth <= 0)
         {
-            // 2. Ставим флаг, чтобы второй мяч не мог зайти сюда
             _isDestroyed = true;
 
             if (GameManager.Instance != null)
@@ -60,8 +78,31 @@ public class Brick : MonoBehaviour, IDamageable
 
             OnAnyBrickDestroyed?.Invoke(transform.position);
 
-            if (_pool != null) _pool.ReturnBrick(this);
-            else gameObject.SetActive(false);
+            // --- ANIMATION MAGIC (DOTween) ---
+
+            // 1. Сразу отключаем физику, чтобы мяч пролетал сквозь
+            if (_collider != null) _collider.enabled = false;
+
+            // 2. Создаем последовательность анимации
+            Sequence seq = DOTween.Sequence();
+
+            // Уменьшаем до 0 за 0.2 секунды (эффект схлопывания)
+            seq.Append(transform.DOScale(Vector3.zero, 0.2f).SetEase(Ease.InBack));
+
+            // Одновременно слегка вращаем
+            seq.Join(transform.DORotate(new Vector3(0, 0, 45), 0.2f));
+
+            // 3. Когда анимация закончилась -> возвращаем в пул
+            seq.OnComplete(() => {
+                if (_pool != null) _pool.ReturnBrick(this);
+                else gameObject.SetActive(false);
+            });
+            // ---------------------------------
+        }
+        else
+        {
+            // Если кирпич ранен, но не убит - тоже трясем
+            transform.DOShakeScale(0.15f, 0.2f);
         }
     }
 }
