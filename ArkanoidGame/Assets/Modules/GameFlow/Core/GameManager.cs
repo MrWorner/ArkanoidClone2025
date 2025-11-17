@@ -16,23 +16,25 @@ public class GameManager : MonoBehaviour
     [SerializeField] private BallPool ballPool;
     [SerializeField] private LevelManager levelManager;
     [SerializeField] private UIManager uiManager;
-
-    // --- ЗАМЕНА: Ссылка на пул вместо префаба ---
     [SerializeField] private PowerUpPool powerUpPool;
-    // [SerializeField] private PowerUp tripleBallPrefab; // <-- Удалено, теперь это в пуле
-    // --------------------------------------------
 
-    [Header("Бонусы")]
-    [SerializeField] private int minBricksForPowerUp = 5;
-    [SerializeField] private int maxBricksForPowerUp = 10;
+    [Header("Бонусы (Баланс)")]
+    [Tooltip("Сколько кирпичей нужно для ПЕРВОГО бонуса на уровне")]
+    [SerializeField] private int startBricksForPowerUp = 10;
 
+    [Tooltip("На сколько увеличивать требование после каждого бонуса")]
+    [SerializeField] private int powerUpStepIncrement = 5;
+
+    // --- Состояние Игры ---
     public int CurrentLives { get; private set; }
     public int CurrentScore { get; private set; }
 
     private int _currentLevel = 1;
     private int _activeBrickCount;
+
+    // Логика бонусов
     private int _bricksDestroyedCounter;
-    private int _nextPowerUpTarget;
+    private int _currentPowerUpThreshold; // Динамический порог
 
     void Awake()
     {
@@ -46,7 +48,6 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        // Проверки (добавили powerUpPool)
         if (uiManager == null || levelManager == null || ballPool == null || powerUpPool == null)
         {
             Debug.LogError("GameManager: Не все ссылки назначены!");
@@ -54,7 +55,7 @@ public class GameManager : MonoBehaviour
         }
 
         Brick.OnAnyBrickDestroyed += HandleBrickDestroyed;
-        _nextPowerUpTarget = Random.Range(minBricksForPowerUp, maxBricksForPowerUp);
+
         StartNewGame();
     }
 
@@ -64,12 +65,18 @@ public class GameManager : MonoBehaviour
         CurrentScore = 0;
         _currentLevel = 1;
 
+        // Инициализируем UI
         uiManager.UpdateLives(CurrentLives);
         uiManager.UpdateScore(CurrentScore);
         uiManager.UpdateLevel(_currentLevel);
 
+        // Сбрасываем сложность бонусов перед первым уровнем
+        ResetPowerUpLogic();
+
         StartCoroutine(LoadLevel(_currentLevel));
     }
+
+    // --- PUBLIC METHODS ---
 
     public void SetBrickCount(int count)
     {
@@ -107,38 +114,55 @@ public class GameManager : MonoBehaviour
     {
         ballPool.ReturnBall(ball);
         int remainingBalls = ballPool.GetActiveBalls().Count;
-        if (remainingBalls <= 0)
-        {
-            LoseLife();
-        }
+        if (remainingBalls <= 0) LoseLife();
     }
 
-    private void HandleBrickDestroyed()
+    // --- INTERNAL LOGIC ---
+
+    private void HandleBrickDestroyed(Vector3 brickPos)
     {
+        // 1. Уменьшаем кол-во оставшихся кирпичей
         _activeBrickCount--;
+
+        // --- ИСПРАВЛЕНИЕ #2: Сначала проверяем победу! ---
         if (_activeBrickCount <= 0)
         {
             _currentLevel++;
             if (uiManager != null) uiManager.UpdateLevel(_currentLevel);
             StartCoroutine(LoadLevel(_currentLevel));
-        }
 
-        _bricksDestroyedCounter++;
-        if (_bricksDestroyedCounter >= _nextPowerUpTarget)
-        {
-            SpawnPowerUp();
-            _bricksDestroyedCounter = 0;
-            _nextPowerUpTarget = Random.Range(minBricksForPowerUp, maxBricksForPowerUp);
+            // ВАЖНО: Делаем return, чтобы бонус НЕ выпал на последнем кирпиче
+            return;
         }
+        // ------------------------------------------------
+
+        // 2. Логика бонусов (если уровень еще не пройден)
+        _bricksDestroyedCounter++;
+
+        // --- ИСПРАВЛЕНИЕ #1: Динамический шаг ---
+        if (_bricksDestroyedCounter >= _currentPowerUpThreshold)
+        {
+            SpawnPowerUp(brickPos);
+
+            // Сбрасываем счетчик
+            _bricksDestroyedCounter = 0;
+
+            // Увеличиваем сложность (10 -> 15 -> 20...)
+            _currentPowerUpThreshold += powerUpStepIncrement;
+            Debug.Log($"GameManager: Бонус выпал! Следующий через {_currentPowerUpThreshold} кирпичей.");
+        }
+        // ----------------------------------------
     }
 
-    private void SpawnPowerUp()
+    private void SpawnPowerUp(Vector3 spawnPos)
     {
-        // Теперь вызываем через ПУЛ
-        float randomX = Random.Range(-3f, 3f);
-        Vector3 spawnPos = new Vector3(randomX, 6f, 0);
+        powerUpPool.GetPowerUp(spawnPos);
+    }
 
-        powerUpPool.GetPowerUp(spawnPos); // <-- Вот так просто!
+    private void ResetPowerUpLogic()
+    {
+        _bricksDestroyedCounter = 0;
+        _currentPowerUpThreshold = startBricksForPowerUp; // Сброс к 10
     }
 
     private void LoseLife()
@@ -167,21 +191,33 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator LoadLevel(int level)
     {
-        if (uiManager != null) uiManager.ShowLevelTransition($"Level {level}");
+        Debug.Log($"Loading Level {level}...");
 
+        // --- ИСПРАВЛЕНИЕ #3: Принудительно показываем UI здесь ---
+        // Это гарантирует, что надпись появится перед любой другой логикой
+        if (uiManager != null)
+        {
+            uiManager.ShowLevelTransition($"Level {level}");
+        }
+        // ---------------------------------------------------------
+
+        // Чистим поле
         ballPool.ReturnAllBalls();
+        powerUpPool.ReturnAllActive(); // Убираем старые бонусы
 
-        // --- ИСПРАВЛЕНИЕ: Быстрая очистка через ПУЛ ---
-        powerUpPool.ReturnAllActive(); // Больше никаких FindObjects!
-        // ----------------------------------------------
+        // Сбрасываем логику спавна бонусов для нового уровня
+        ResetPowerUpLogic();
 
+        // Строим уровень
         if (levelManager != null)
         {
+            // Для теста используем хаос, но в реальной игре можно чередовать
             levelManager.BuildChaosLevel();
         }
 
         RespawnMainBall();
 
+        // Ждем 2 секунды (игрок видит надпись Level X)
         yield return new WaitForSeconds(2f);
 
         if (uiManager != null) uiManager.HideLevelTransition();

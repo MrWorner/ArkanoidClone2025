@@ -385,7 +385,7 @@ public class LevelManager : MonoBehaviour
         int destroyableCount = 0;
         foreach (var brick in _spawnedGrid)
         {
-            if (brick != null && !brick.IsIndestructible) destroyableCount++;
+            if (brick != null && !brick.BrickType.isIndestructible) destroyableCount++;
         }
         GameManager.Instance.SetBrickCount(destroyableCount);
     }
