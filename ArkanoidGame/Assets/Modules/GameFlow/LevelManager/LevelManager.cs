@@ -1,6 +1,10 @@
 ﻿using Sirenix.OdinInspector;
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class LevelManager : MonoBehaviour
 {
@@ -12,253 +16,318 @@ public class LevelManager : MonoBehaviour
     [SerializeField] private float brickWidth = 0.69333f;
     [SerializeField] private float brickHeight = 0.34666f;
 
-    [Header("Phase 1: Geometry (Base)")]
-    [Tooltip("Обычные шаблоны для формы уровня")]
+    // ========================================================================
+    // PHASE 1: GEOMETRY
+    // ========================================================================
+    [Title("Phase 1: Geometry")]
+    [FolderPath] public string geometryPath = "Assets/Modules/Data/Chunks/Geometry";
     [SerializeField] private List<BrickChunkSO> geometryChunks;
+
     public enum SymmetryType { MirrorHorizontal, MirrorVertical, MirrorBoth, Chaos }
     [SerializeField] private SymmetryType symmetryMode = SymmetryType.MirrorHorizontal;
 
-    [Tooltip("Тип кирпича 'по умолчанию' (заглушка перед покраской)")]
     [SerializeField] private BrickTypeSO defaultBrickType;
 
-    [Header("Phase 2: Painting (Colors)")]
+    // ========================================================================
+    // PHASE 2: PAINTING
+    // ========================================================================
+    [Title("Phase 2: Painting")]
+    [InfoBox("Внимание: В Палитре НЕ должно быть неубиваемых блоков!")]
     [SerializeField] private BrickPaletteSO palette;
+
     public enum PaintPattern { BottomToTop, LeftToRight, ZebraHorizontal, CenterOut, RandomNoise }
     [SerializeField] private PaintPattern paintPattern = PaintPattern.BottomToTop;
 
-    [Header("Phase 3: Obstacles (Hard Layer)")]
-    [Tooltip("Шаблоны ТОЛЬКО для неубиваемых блоков (щадящие)")]
+    // ========================================================================
+    // PHASE 3: OBSTACLES
+    // ========================================================================
+    [Title("Phase 3: Obstacles")]
+
+    [Tooltip("Если включено - накладывает слой препятствий поверх покраски.")]
+    [SerializeField] private bool enableObstacles = true;
+
+    [FolderPath] public string obstaclesPath = "Assets/Modules/Data/Chunks/Obstacles";
     [SerializeField] private List<BrickChunkSO> obstacleChunks;
+
     [SerializeField] private BrickTypeSO indestructibleType;
-    [Range(0f, 1f)][SerializeField] private float obstacleChance = 0.5f; // Шанс появления слоя препятствий
 
-    // --- Внутренняя сетка для доступа к кирпичам по координатам ---
+    // УБРАЛИ obstacleChance
+
+    // --- Internal ---
     private Brick[,] _spawnedGrid = new Brick[COLS, ROWS];
-    // -------------------------------------------------------------
 
-    [Button("Сгенерировать Уровень (Pipeline)")]
+    void Start() { }
+
+    // ========================================================================
+    // TOOLS
+    // ========================================================================
+    [Title("Tools")]
+
+    [Button("📂 Загрузить Чанки", ButtonSizes.Large), GUIColor(0.6f, 1f, 0.6f)]
+    private void LoadChunksFromFolders()
+    {
+#if UNITY_EDITOR
+        geometryChunks = LoadAssets<BrickChunkSO>(geometryPath);
+        obstacleChunks = LoadAssets<BrickChunkSO>(obstaclesPath);
+        EditorUtility.SetDirty(this);
+        Debug.Log($"[LevelManager] Loaded {geometryChunks.Count} Geometry & {obstacleChunks.Count} Obstacles.");
+#endif
+    }
+
+    [Button("🎲 Полный Рандом (Chaos)", ButtonSizes.Large), GUIColor(1f, 0.5f, 0.5f)]
+    public void BuildChaosLevel()
+    {
+        symmetryMode = SymmetryType.Chaos;
+
+        var paintValues = System.Enum.GetValues(typeof(PaintPattern));
+        paintPattern = (PaintPattern)paintValues.GetValue(Random.Range(0, paintValues.Length));
+
+        // Рандомим включение препятствий (50/50)
+        // = Random.value > 0.5f;
+
+        BuildLevel();
+    }
+
+    [Button("Построить")]
     public void BuildLevel()
     {
         if (!ValidateReferences()) return;
-
-        // 0. Очистка
         CleanupOldLevel();
 
-        // --- ФАЗА 1: ГЕОМЕТРИЯ ---
-        GenerateGeometryLayer();
+        if (symmetryMode == SymmetryType.Chaos) GenerateChaosGeometry();
+        else GenerateSymmetricGeometry();
 
-        // --- ФАЗА 2: ПОКРАСКА ---
         PaintBricksLayer();
 
-        // --- ФАЗА 3: ПРЕПЯТСТВИЯ ---
-        OverlayObstaclesLayer();
+        // Четкая логика: если галочка стоит - накладываем.
+        if (enableObstacles)
+        {
+            OverlayObstaclesLayer();
+        }
 
-        // Финал: Отчет GameManager'у
         ReportToGameManager();
     }
 
+    // ... (GenerateChaosGeometry, GenerateSymmetricGeometry, SpawnQuadrant - БЕЗ ИЗМЕНЕНИЙ) ...
+    // Я скопирую только измененные методы для краткости, остальное у вас есть.
+
     // ========================================================================
-    // ФАЗА 1: ГЕОМЕТРИЯ (Создание объектов)
+    // ЛОГИКА ГЕНЕРАЦИИ
     // ========================================================================
-    private void GenerateGeometryLayer()
+
+    private void GenerateChaosGeometry()
     {
-        BrickChunkSO chunkA = geometryChunks[Random.Range(0, geometryChunks.Count)];
-        BrickChunkSO chunkB = geometryChunks[Random.Range(0, geometryChunks.Count)];
+        if (geometryChunks.Count < 2)
+        {
+            Debug.LogError("Not enough geometry chunks! Need at least 2.");
+            return;
+        }
 
-        // Расчет симметрии (Квадранты)
-        BrickChunkSO[] quads = new BrickChunkSO[4];
-        bool[] fx = new bool[4];
-        bool[] fy = new bool[4];
-        SetupSymmetry(chunkA, chunkB, ref quads, ref fx, ref fy);
-
-        // Расчет центра
         Vector2 currentCenter = transform.position;
         float totalW = COLS * brickWidth;
         float totalH = ROWS * brickHeight;
         Vector2 startPos = new Vector2(currentCenter.x - (totalW / 2f), currentCenter.y + (totalH / 2f));
 
-        // Создаем кирпичи
-        SpawnQuadrant(quads[0], 0, 0, fx[0], fy[0], startPos); // Top-Left
-        SpawnQuadrant(quads[1], 6, 0, fx[1], fy[1], startPos); // Top-Right
-        SpawnQuadrant(quads[2], 0, 6, fx[2], fy[2], startPos); // Bottom-Left
-        SpawnQuadrant(quads[3], 6, 6, fx[3], fy[3], startPos); // Bottom-Right
+        // 1. Выбираем 2 случайных шаблона
+        BrickChunkSO chunkA = geometryChunks[Random.Range(0, geometryChunks.Count)];
+        BrickChunkSO chunkB = geometryChunks[Random.Range(0, geometryChunks.Count)];
+
+        // 2. Создаем список для распределения (2 раза А, 2 раза Б)
+        List<BrickChunkSO> distribution = new List<BrickChunkSO> { chunkA, chunkA, chunkB, chunkB };
+
+        // 3. Перемешиваем список (Shuffle)
+        distribution = distribution.OrderBy(x => Random.value).ToList();
+
+        // 4. Список углов
+        List<Vector2Int> quadrants = new List<Vector2Int>
+        {
+            new Vector2Int(0, 0), // TL
+            new Vector2Int(6, 0), // TR
+            new Vector2Int(0, 6), // BL
+            new Vector2Int(6, 6)  // BR
+        };
+
+        Debug.Log($"<b>[LevelGen]</b> CHAOS 2-Template Mode: <color=cyan>{chunkA.name}</color> & <color=cyan>{chunkB.name}</color>");
+
+        // 5. Раздаем
+        for (int i = 0; i < 4; i++)
+        {
+            BrickChunkSO selectedChunk = distribution[i];
+            Vector2Int offset = quadrants[i];
+
+            // Случайное вращение
+            bool flipX = Random.value > 0.5f;
+            bool flipY = Random.value > 0.5f;
+
+            SpawnQuadrant(selectedChunk, offset.x, offset.y, flipX, flipY, startPos);
+
+            Debug.Log($"-> Quad ({offset.x},{offset.y}): {selectedChunk.name} | Flip: {flipX}/{flipY}");
+        }
+    }
+
+    private void GenerateSymmetricGeometry()
+    {
+        if (geometryChunks.Count == 0) return;
+
+        BrickChunkSO chunkA = geometryChunks[Random.Range(0, geometryChunks.Count)];
+        BrickChunkSO chunkB = geometryChunks[Random.Range(0, geometryChunks.Count)];
+
+        BrickChunkSO[] quads = new BrickChunkSO[4];
+        bool[] fx = new bool[4];
+        bool[] fy = new bool[4];
+
+        SetupSymmetry(chunkA, chunkB, ref quads, ref fx, ref fy);
+
+        Vector2 currentCenter = transform.position;
+        float totalW = COLS * brickWidth;
+        float totalH = ROWS * brickHeight;
+        Vector2 startPos = new Vector2(currentCenter.x - (totalW / 2f), currentCenter.y + (totalH / 2f));
+
+        SpawnQuadrant(quads[0], 0, 0, fx[0], fy[0], startPos);
+        SpawnQuadrant(quads[1], 6, 0, fx[1], fy[1], startPos);
+        SpawnQuadrant(quads[2], 0, 6, fx[2], fy[2], startPos);
+        SpawnQuadrant(quads[3], 6, 6, fx[3], fy[3], startPos);
     }
 
     private void SpawnQuadrant(BrickChunkSO chunk, int offsetX, int offsetY, bool flipX, bool flipY, Vector2 startPos)
     {
         if (chunk == null) return;
-
         foreach (var data in chunk.bricks)
         {
-            // 1. Локальные координаты в чанке 6x6
             int cx = data.position.x;
             int cy = data.position.y;
-
-            // 2. Зеркалирование
             if (flipX) cx = (chunk.width - 1) - cx;
             if (flipY) cy = (chunk.height - 1) - cy;
 
-            // 3. Глобальные координаты
             int col = offsetX + cx;
             int row = offsetY + (chunk.height - 1 - cy);
 
-            // 4. Создаем кирпич
             Brick newBrick = Application.isPlaying ? brickPool.GetBrick() : brickPool.GetBrickEditor();
-
-            // 5. СТАВИМ ДЕФОЛТНЫЙ ТИП (Покрасим позже)
             newBrick.Setup(defaultBrickType);
 
-            // 6. Позиционируем
             float xPos = startPos.x + (col * brickWidth);
             float yPos = startPos.y - (row * brickHeight);
             newBrick.transform.position = new Vector2(xPos, yPos);
 
-            // 7. ЗАПИСЫВАЕМ В МАССИВ (ВАЖНО!)
             if (col >= 0 && col < COLS && row >= 0 && row < ROWS)
-            {
                 _spawnedGrid[col, row] = newBrick;
-            }
         }
     }
 
-    // ========================================================================
-    // ФАЗА 2: ПОКРАСКА (Изменение типов)
-    // ========================================================================
+    // --- ИЗМЕНЕННЫЙ МЕТОД ---
+    private void OverlayObstaclesLayer()
+    {
+        // Больше НЕТ проверки на obstacleChance
+        if (obstacleChunks == null || obstacleChunks.Count == 0) return;
+
+        BrickChunkSO obsChunk = obstacleChunks[Random.Range(0, obstacleChunks.Count)];
+
+        // Накладываем препятствия
+        ApplyObstacleQuadrant(obsChunk, 0, 0, false, false);
+        ApplyObstacleQuadrant(obsChunk, 6, 0, true, false);
+        ApplyObstacleQuadrant(obsChunk, 0, 6, false, true);
+        ApplyObstacleQuadrant(obsChunk, 6, 6, true, true);
+    }
+    // ------------------------
+
+    // ... (Остальные методы PaintBricksLayer, ApplyObstacleQuadrant, SetupSymmetry, ReportToGameManager, CleanupOldLevel, ValidateReferences, LoadAssets - БЕЗ ИЗМЕНЕНИЙ) ...
+
+    // (Вставьте их сюда из предыдущего скрипта)
+
     private void PaintBricksLayer()
     {
+        if (palette == null || palette.Count == 0) return;
         for (int y = 0; y < ROWS; y++)
         {
             for (int x = 0; x < COLS; x++)
             {
                 Brick brick = _spawnedGrid[x, y];
-                if (brick == null) continue; // Тут пусто
-
-                // Вычисляем индекс палитры (0.0 to 1.0)
+                if (brick == null) continue;
                 float t = 0f;
-
                 switch (paintPattern)
                 {
-                    case PaintPattern.BottomToTop:
-                        // y=0 (верх), y=11 (низ). Нам нужно снизу(0) вверх(1)
-                        // значит: (MaxRow - y) / MaxRow
-                        t = (float)(ROWS - 1 - y) / (ROWS - 1);
-                        break;
-
-                    case PaintPattern.LeftToRight:
-                        t = (float)x / (COLS - 1);
-                        break;
-
-                    case PaintPattern.ZebraHorizontal:
-                        // Четные ряды = 0, Нечетные = 1 (или наоборот)
-                        t = (y % 2 == 0) ? 0f : 1f;
-                        // Или можно map'ить на середину и конец палитры
-                        break;
-
+                    case PaintPattern.BottomToTop: t = (float)(ROWS - 1 - y) / (ROWS - 1); break;
+                    case PaintPattern.LeftToRight: t = (float)x / (COLS - 1); break;
+                    case PaintPattern.ZebraHorizontal: t = (y % 2 == 0) ? 0f : 1f; break;
                     case PaintPattern.CenterOut:
-                        // Дистанция от центра (6, 6)
                         float dist = Vector2.Distance(new Vector2(x, y), new Vector2(COLS / 2f, ROWS / 2f));
                         float maxDist = Vector2.Distance(Vector2.zero, new Vector2(COLS / 2f, ROWS / 2f));
-                        t = 1f - (dist / maxDist); // 1 в центре, 0 с краю
-                        break;
-
-                    case PaintPattern.RandomNoise:
-                        t = Random.value;
-                        break;
+                        t = 1f - (dist / maxDist); break;
+                    case PaintPattern.RandomNoise: t = Random.value; break;
                 }
-
-                // Конвертируем 0..1 в Индекс Палитры
                 int tierIndex = Mathf.RoundToInt(t * (palette.Count - 1));
-
-                // Применяем тип из палитры
                 brick.Setup(palette.GetTier(tierIndex));
             }
         }
-    }
-
-    // ========================================================================
-    // ФАЗА 3: ПРЕПЯТСТВИЯ (Наложение Hard Layer)
-    // ========================================================================
-    private void OverlayObstaclesLayer()
-    {
-        // Шанс пропустить этот шаг
-        if (Random.value > obstacleChance) return;
-        if (obstacleChunks.Count == 0) return;
-
-        // Выбираем случайные шаблоны препятствий (для симметрии можно так же 2 взять)
-        BrickChunkSO obsChunk = obstacleChunks[Random.Range(0, obstacleChunks.Count)];
-
-        // Мы просто "накладываем" их. Логика похожа на SpawnQuadrant, 
-        // но вместо создания мы ИЩЕМ существующий кирпич.
-
-        // Пример: накладываем зеркально во все 4 угла
-        ApplyObstacleQuadrant(obsChunk, 0, 0, false, false);
-        ApplyObstacleQuadrant(obsChunk, 6, 0, true, false);
-        ApplyObstacleQuadrant(obsChunk, 0, 6, false, true);
-        ApplyObstacleQuadrant(obsChunk, 6, 6, true, true);
     }
 
     private void ApplyObstacleQuadrant(BrickChunkSO chunk, int offsetX, int offsetY, bool flipX, bool flipY)
     {
         foreach (var data in chunk.bricks)
         {
-            // В шаблоне препятствий нас интересуют только те кирпичи, 
-            // которые помечены как "Indestructible" или специальные.
-            // Если в шаблоне "обычный" кирпич - мы его игнорируем (прозрачность).
-            // НО: В вашей системе BrickChunk хранит BrickType. 
-            // Допустим, мы договорились: если в шаблоне Obstacle есть кирпич - мы заменяем на Indestructible.
-
             int cx = data.position.x;
             int cy = data.position.y;
             if (flipX) cx = (chunk.width - 1) - cx;
             if (flipY) cy = (chunk.height - 1) - cy;
-
             int col = offsetX + cx;
             int row = offsetY + (chunk.height - 1 - cy);
-
             if (col >= 0 && col < COLS && row >= 0 && row < ROWS)
             {
                 Brick existingBrick = _spawnedGrid[col, row];
-
-                // Если там уже есть кирпич -> заменяем его на Неубиваемый
-                if (existingBrick != null)
-                {
-                    existingBrick.Setup(indestructibleType);
-                }
+                if (existingBrick != null) existingBrick.Setup(indestructibleType);
             }
         }
     }
 
-
-    // ========================================================================
-    // ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ
-    // ========================================================================
+    private void SetupSymmetry(BrickChunkSO A, BrickChunkSO B, ref BrickChunkSO[] tmpl, ref bool[] fx, ref bool[] fy)
+    {
+        switch (symmetryMode)
+        {
+            case SymmetryType.MirrorHorizontal:
+                tmpl[0] = A; fx[0] = false; fy[0] = false;
+                tmpl[1] = A; fx[1] = true; fy[1] = false;
+                tmpl[2] = B; fx[2] = false; fy[2] = false;
+                tmpl[3] = B; fx[3] = true; fy[3] = false;
+                break;
+            case SymmetryType.MirrorVertical:
+                tmpl[0] = A; fx[0] = false; fy[0] = false;
+                tmpl[1] = B; fx[1] = false; fy[1] = false;
+                tmpl[2] = A; fx[2] = false; fy[2] = true;
+                tmpl[3] = B; fx[3] = false; fy[3] = true;
+                break;
+            case SymmetryType.MirrorBoth:
+                tmpl[0] = A; fx[0] = false; fy[0] = false;
+                tmpl[1] = A; fx[1] = true; fy[1] = false;
+                tmpl[2] = A; fx[2] = false; fy[2] = true;
+                tmpl[3] = A; fx[3] = true; fy[3] = true;
+                break;
+            case SymmetryType.Chaos:
+                break;
+        }
+    }
 
     private void ReportToGameManager()
     {
         if (!Application.isPlaying) return;
         if (GameManager.Instance == null) return;
-
         int destroyableCount = 0;
         foreach (var brick in _spawnedGrid)
         {
-            if (brick != null && !brick.IsIndestructible) // Нужно добавить свойство IsIndestructible в Brick
-            {
-                destroyableCount++;
-            }
+            if (brick != null && !brick.IsIndestructible) destroyableCount++;
         }
         GameManager.Instance.SetBrickCount(destroyableCount);
     }
 
     private void CleanupOldLevel()
     {
-        System.Array.Clear(_spawnedGrid, 0, _spawnedGrid.Length); // Чистим массив ссылок
+        System.Array.Clear(_spawnedGrid, 0, _spawnedGrid.Length);
         if (Application.isPlaying) brickPool.ReturnAllActiveBricks();
         else brickPool.DestroyAllBricksEditor();
     }
 
     private bool ValidateReferences()
     {
-        if (brickPool == null || palette == null || defaultBrickType == null || geometryChunks.Count == 0)
+        if (brickPool == null || palette == null || defaultBrickType == null)
         {
             Debug.LogError("LevelManager: Missing references!");
             return false;
@@ -266,37 +335,18 @@ public class LevelManager : MonoBehaviour
         return true;
     }
 
-    // (Метод SetupSymmetry такой же, как в прошлом ответе, скопируйте его сюда)
-    private void SetupSymmetry(BrickChunkSO A, BrickChunkSO B, ref BrickChunkSO[] templates, ref bool[] fx, ref bool[] fy)
+#if UNITY_EDITOR
+    private List<T> LoadAssets<T>(string folderPath) where T : Object
     {
-        switch (symmetryMode)
+        List<T> assets = new List<T>();
+        string[] guids = AssetDatabase.FindAssets($"t:{typeof(T).Name}", new[] { folderPath });
+        foreach (string guid in guids)
         {
-            case SymmetryType.MirrorHorizontal:
-                templates[0] = A; fx[0] = false; fy[0] = false;
-                templates[1] = A; fx[1] = true; fy[1] = false;
-                templates[2] = B; fx[2] = false; fy[2] = false;
-                templates[3] = B; fx[3] = true; fy[3] = false;
-                break;
-            case SymmetryType.MirrorVertical:
-                templates[0] = A; fx[0] = false; fy[0] = false;
-                templates[1] = B; fx[1] = false; fy[1] = false;
-                templates[2] = A; fx[2] = false; fy[2] = true;
-                templates[3] = B; fx[3] = false; fy[3] = true;
-                break;
-            case SymmetryType.MirrorBoth:
-                templates[0] = A; fx[0] = false; fy[0] = false;
-                templates[1] = A; fx[1] = true; fy[1] = false;
-                templates[2] = A; fx[2] = false; fy[2] = true;
-                templates[3] = A; fx[3] = true; fy[3] = true;
-                break;
-            case SymmetryType.Chaos:
-                for (int i = 0; i < 4; i++)
-                {
-                    templates[i] = geometryChunks[Random.Range(0, geometryChunks.Count)];
-                    fx[i] = Random.value > 0.5f;
-                    fy[i] = Random.value > 0.5f;
-                }
-                break;
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            T asset = AssetDatabase.LoadAssetAtPath<T>(path);
+            if (asset != null) assets.Add(asset);
         }
+        return assets;
     }
+#endif
 }

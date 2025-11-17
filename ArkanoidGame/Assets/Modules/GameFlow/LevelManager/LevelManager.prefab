@@ -45,14 +45,91 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelManager
   brickPool: {fileID: 0}
-  rows: 12
-  cols: 12
   brickWidth: 0.69333
   brickHeight: 0.34666
-  levelBrickTypes:
-  - {fileID: 11400000, guid: 05e1dea99e4a32c4da42c46af7096bb8, type: 2}
-  - {fileID: 11400000, guid: 778a6176038e01045ac12e31c7bc7418, type: 2}
-  - {fileID: 11400000, guid: 1b32e313edf569f46ad0fa2d8f26b50b, type: 2}
-  - {fileID: 11400000, guid: af5f8d44ae7d11442843c088ddd45ca3, type: 2}
-  - {fileID: 11400000, guid: 704110acedeef3845b5e42e3135f09b5, type: 2}
-  - {fileID: 11400000, guid: f792d26d4837aa74399396d9c6dc2edb, type: 2}
+  geometryPath: Assets/Modules/GameFlow/LevelGenerator/TemplateSO/ForBricks
+  geometryChunks:
+  - {fileID: 11400000, guid: 98bdbe246591e9d4392fd2a6060f1efe, type: 2}
+  - {fileID: 11400000, guid: 3c68697662a2531439043172a50461a0, type: 2}
+  - {fileID: 11400000, guid: 2320157f73a6f264e8751a8656088397, type: 2}
+  - {fileID: 11400000, guid: 108fddd77588ea64b92adc394bb36289, type: 2}
+  - {fileID: 11400000, guid: 971430535a61e3649b88a599f4cc9215, type: 2}
+  - {fileID: 11400000, guid: d6101d5c4bff6104fa196c02d4365b72, type: 2}
+  - {fileID: 11400000, guid: 89baf24f6f3dec74882b0ea2ecdd68b3, type: 2}
+  - {fileID: 11400000, guid: bdcf687556c0bad449150ecebe379b28, type: 2}
+  - {fileID: 11400000, guid: ac91340793b953e46bbd07270cecb03d, type: 2}
+  - {fileID: 11400000, guid: 0af1f1b08df2b064097a597d51a09170, type: 2}
+  - {fileID: 11400000, guid: 9d3ccba25f80f5548baece150ba8a120, type: 2}
+  - {fileID: 11400000, guid: 9f9ca7352ba49bb408cddd95e07e33f5, type: 2}
+  - {fileID: 11400000, guid: 6746ac778683f62499203cfc3c09a510, type: 2}
+  - {fileID: 11400000, guid: 14bbf9da7507b5f43bd3896d17858d5e, type: 2}
+  - {fileID: 11400000, guid: 46cb8c9cc0f066b4aa47693a9eaf6d5d, type: 2}
+  - {fileID: 11400000, guid: 3445e6c11c8e7c341ab16eb379949cc4, type: 2}
+  - {fileID: 11400000, guid: 9f1c5647f79d5fc47becb85cb90c36bf, type: 2}
+  - {fileID: 11400000, guid: 87514ae945997df448937b0aee26f27e, type: 2}
+  - {fileID: 11400000, guid: 585e6bb7d8439524ca7e8f068f331dad, type: 2}
+  - {fileID: 11400000, guid: 9c019cd691b6059449724bf714fc2e96, type: 2}
+  - {fileID: 11400000, guid: 29faadd795fa44c479b09037123628af, type: 2}
+  - {fileID: 11400000, guid: 4f1485892cf8c1544a02fc823af539f8, type: 2}
+  - {fileID: 11400000, guid: 2896c99141cd7fe4a92d281a8f7c5fc4, type: 2}
+  - {fileID: 11400000, guid: 69b911770dd583542a65dddff5bd701e, type: 2}
+  - {fileID: 11400000, guid: b82a0eb70900ecb43ae98ec8ed7a0a7d, type: 2}
+  - {fileID: 11400000, guid: ddb204eec4ac4a14591b7194132a1e21, type: 2}
+  - {fileID: 11400000, guid: 50da2025ee4afd14aa301a2e654b6220, type: 2}
+  - {fileID: 11400000, guid: 0a2d6eb2068ce664e944b3fb35a5f801, type: 2}
+  - {fileID: 11400000, guid: 5087f72d49eed0a41838f011694281e7, type: 2}
+  - {fileID: 11400000, guid: d5526eead23234f45942cc0eff98dc8c, type: 2}
+  - {fileID: 11400000, guid: 5056f26aafd43b54ea34fe01e0b37225, type: 2}
+  - {fileID: 11400000, guid: bb00d364b3afe3342950d06bcda1012e, type: 2}
+  - {fileID: 11400000, guid: 06aa92bf9bfbc9642acb52f5b3f5f9ad, type: 2}
+  - {fileID: 11400000, guid: 6457455ca635783408c8c7a346b8a490, type: 2}
+  - {fileID: 11400000, guid: 62d4c929eb7ec96479478573258c8c1f, type: 2}
+  - {fileID: 11400000, guid: f512c84ce84f9c048abf8fce176cf955, type: 2}
+  - {fileID: 11400000, guid: ed5b2425c26fdc845bc3fd8a30f389bb, type: 2}
+  - {fileID: 11400000, guid: e3cc134bd22002c4b9cd439ac89a45d6, type: 2}
+  - {fileID: 11400000, guid: b758927216e056b4fb4ef4b9b0eb7589, type: 2}
+  - {fileID: 11400000, guid: e666415da46d9bf4ba0db1d6b1432212, type: 2}
+  - {fileID: 11400000, guid: 9e78c43d7c5499f438ece86910b205e0, type: 2}
+  - {fileID: 11400000, guid: d59f72da843c88845bbe19bcd53b511e, type: 2}
+  - {fileID: 11400000, guid: cb2544de426498943849730f403687ab, type: 2}
+  - {fileID: 11400000, guid: d61ca4147baaccd4490f46bc9b7d427d, type: 2}
+  - {fileID: 11400000, guid: 253f3f29c39277b4c8ad53d2e93f6921, type: 2}
+  - {fileID: 11400000, guid: 513a305650b21be46b8ca3f94108e871, type: 2}
+  - {fileID: 11400000, guid: 31effb82453982f42946054e93328f62, type: 2}
+  - {fileID: 11400000, guid: 73a72660896a2454e824ff983920fd7b, type: 2}
+  - {fileID: 11400000, guid: 7e3f0c8fbb8898541ab56d2cf617c62a, type: 2}
+  - {fileID: 11400000, guid: 1ae55a92dda3fb94f8e615547ecf9cb1, type: 2}
+  - {fileID: 11400000, guid: b740b19ec3841f141b59a4783b9b1ebc, type: 2}
+  - {fileID: 11400000, guid: 614f81fba2ca14047bdcf82ec8ad3543, type: 2}
+  - {fileID: 11400000, guid: a22cdadf5c9899643a04d1b4691d52c1, type: 2}
+  symmetryMode: 0
+  defaultBrickType: {fileID: 11400000, guid: af5f8d44ae7d11442843c088ddd45ca3, type: 2}
+  palette: {fileID: 11400000, guid: a67c689714c22624382492248e734fad, type: 2}
+  paintPattern: 0
+  obstaclesPath: Assets/Modules/GameFlow/LevelGenerator/TemplateSO/ForIndestructubleBricks
+  obstacleChunks:
+  - {fileID: 11400000, guid: 8286e82b0a1129446a14a023f6267c96, type: 2}
+  - {fileID: 11400000, guid: f9a82f3d174aeb34793abed78921ce50, type: 2}
+  - {fileID: 11400000, guid: f50d7f71a16c2a144aec55246291f6e7, type: 2}
+  - {fileID: 11400000, guid: bda61072a33224a408b0f45f266624b7, type: 2}
+  - {fileID: 11400000, guid: ff001778362f37644b26b143be503a71, type: 2}
+  - {fileID: 11400000, guid: 0f2766ae578339a498eb03eafe9db28b, type: 2}
+  - {fileID: 11400000, guid: 5c04803735c4f50499de66880b464c31, type: 2}
+  - {fileID: 11400000, guid: 056179d023b627f448916d39a2ce4adb, type: 2}
+  - {fileID: 11400000, guid: f0a3b3e205bd3e045b80f5a4a0a4ec42, type: 2}
+  - {fileID: 11400000, guid: 5612859d11d82da469e43427dec9a665, type: 2}
+  - {fileID: 11400000, guid: cb3c961c45a13394b96f9f644bf3c1d2, type: 2}
+  - {fileID: 11400000, guid: e931dcbc203b77c45b5ad1a93b5555c4, type: 2}
+  - {fileID: 11400000, guid: 7f0fa4880a6c4c545abbae4f038fea54, type: 2}
+  - {fileID: 11400000, guid: d8c5e6a8ed19ffe44a30223bd68fd56d, type: 2}
+  - {fileID: 11400000, guid: a2ee58672c406cf44ae8c6f18d59812f, type: 2}
+  - {fileID: 11400000, guid: 000e63171433d594aaba8f7a5ff9d50f, type: 2}
+  - {fileID: 11400000, guid: 277dd54efcd39d745b4af86d5874170d, type: 2}
+  - {fileID: 11400000, guid: edc756a5c547b3e40b2cc1ecc22a5910, type: 2}
+  - {fileID: 11400000, guid: 2be6bc847e649754f9eb49c46a358325, type: 2}
+  - {fileID: 11400000, guid: 82e62bc8a90338e469dda29b5a6d6f7a, type: 2}
+  - {fileID: 11400000, guid: 15bbc2524a247ab4d9059f53ea2fcd81, type: 2}
+  - {fileID: 11400000, guid: 06cde932001d2e249aee61765928a311, type: 2}
+  - {fileID: 11400000, guid: 9775d5aabb524f2469e7d7201b501b82, type: 2}
+  indestructibleType: {fileID: 11400000, guid: f792d26d4837aa74399396d9c6dc2edb, type: 2}
+  obstacleChance: 0.5

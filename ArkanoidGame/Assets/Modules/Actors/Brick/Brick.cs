@@ -45,10 +45,6 @@ public class Brick : MonoBehaviour, IDamageable
 
         _currentHealth = _brickType.health;
 
-        if (_brickType.isIndestructible)
-        {
-            Debug.Log("<color=red>IT WORKS!</color>", this);
-        }
     }
 
     /// <summary>
