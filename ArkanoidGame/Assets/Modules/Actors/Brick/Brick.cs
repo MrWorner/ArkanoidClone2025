@@ -5,7 +5,7 @@ public class Brick : MonoBehaviour, IDamageable
     public static event System.Action OnAnyBrickDestroyed;
 
     private BrickPool _pool;
-    private BrickType _brickType;
+    [SerializeField] private BrickType _brickType;
     private SpriteRenderer _spriteRenderer;
     private int _currentHealth;
 
@@ -43,6 +43,14 @@ public class Brick : MonoBehaviour, IDamageable
     /// </summary>
     public void TakeDamage(int damageAmount)
     {
+        // ЗАЩИТА: Если тип потерялся, просто уничтожаем кирпич, чтобы не ломать игру
+        if (_brickType == null)
+        {
+            Debug.LogError($"Brick {name}: BrickType потерян! Уничтожаю объект.");
+            gameObject.SetActive(false);
+            return;
+        }
+
         if (_brickType.isIndestructible)
         {
             return;
@@ -52,7 +60,12 @@ public class Brick : MonoBehaviour, IDamageable
 
         if (_currentHealth <= 0)
         {
-            GameManager.Instance.AddScore(_brickType.points);
+            // Проверка на Singleton GameManager (на случай если вы тестируете без него)
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.AddScore(_brickType.points);
+            }
+
             OnAnyBrickDestroyed?.Invoke();
 
             if (_pool != null)

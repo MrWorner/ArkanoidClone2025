@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a7337783d9a21a4d9f8e55f9ec2b6bc, type: 3}
-  m_Name: BrickType_White
+  m_Name: BrickType_Green
   m_EditorClassIdentifier: Assembly-CSharp::BrickType
   sprite: {fileID: 21300000, guid: 7fb3865b4f0071642b948a54b4ef3545, type: 3}
-  color: {r: 1, g: 1, b: 1, a: 1}
-  points: 1
+  color: {r: 0, g: 1, b: 0.00002193451, a: 1}
+  points: 2
   isIndestructible: 0
   health: 1

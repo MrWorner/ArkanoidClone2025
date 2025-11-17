@@ -449,7 +449,7 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets/CrystalFramework
+    - Assets
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
@@ -468,7 +468,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: b8ef0200
     m_LastClickedID: 192440
-    m_ExpandedIDs: 0000000052a6000054a6000056a6000058a600005aa600005ca600005ea60000
+    m_ExpandedIDs: 0000000074a6000076a6000078a600007aa600007ca600007ea6000080a60000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -497,7 +497,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 0000000052a6000054a6000056a6000058a600005aa600005ca600005ea60000
+    m_ExpandedIDs: 0000000074a6000076a6000078a600007aa600007ca600007ea6000080a60000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1292,7 +1292,7 @@ MonoBehaviour:
   m_AudioPlay: 0
   m_DebugDrawModesUseInteractiveLightBakingData: 0
   m_Position:
-    m_Target: {x: 5.2054086, y: 7.99172, z: -0.080447674}
+    m_Target: {x: 651.04236, y: 1593.3152, z: 0.13291085}
     speed: 2
     m_Value: {x: 5.2054086, y: 7.99172, z: -0.080447674}
   m_RenderMode: 0
@@ -1344,7 +1344,7 @@ MonoBehaviour:
     speed: 2
     m_Value: {x: 0, y: 0, z: 0, w: 1}
   m_Size:
-    m_Target: 8.551663
+    m_Target: 1632.5521
     speed: 2
     m_Value: 8.551663
   m_Ortho:

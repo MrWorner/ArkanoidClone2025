@@ -7,8 +7,9 @@ public class BallController : MonoBehaviour
     [Header("Ссылки")]
     [Tooltip("Перетащите сюда объект 'Paddle'")]
     [SerializeField] private Transform paddleTransform;
-    [Tooltip("Позиция мяча ОТНОСИТЕЛЬНО центра платформы")]
-    [SerializeField] private Vector3 paddleOffset = new Vector3(0, 0.5f, 0);
+
+    [Tooltip("ВАЖНО: Y должен быть достаточно большим (0.6+), чтобы мяч не касался ракетки при старте!")]
+    [SerializeField] private Vector3 paddleOffset = new Vector3(0, 0.6f, 0); // <-- Увеличил до 0.6 для безопасности
 
     [Header("Настройки Запуска")]
     [SerializeField] private float initialSpeed = 7f;
@@ -25,7 +26,11 @@ public class BallController : MonoBehaviour
     private bool isLaunched = false;
     private float _currentSpeed;
     private Transform _homingTarget = null;
-    private Coroutine _launchCoroutine; // Ссылка на таймер
+    private Coroutine _launchCoroutine;
+
+    // --- НОВАЯ ПЕРЕМЕННАЯ ---
+    private float _launchTime; // Время, когда мяч был запущен
+    // ------------------------
 
     void Awake()
     {
@@ -34,26 +39,30 @@ public class BallController : MonoBehaviour
 
     void Start()
     {
-        // Start() теперь НЕ вызывает ResetMode.
-        // GameManager полностью управляет мячом.
-        // Когда GameManager.Start() вызовет LoadLevel(), 
-        // он вызовет ResetMode() за нас.
+        // ResetMode вызывается из GameManager, но для теста в сцене оставим здесь
+        if (isLaunched == false)
+        {
+            ResetMode();
+            StartCoroutine(LaunchDelayCoroutine());
+        }
     }
 
     void FixedUpdate()
     {
         if (!isLaunched) return;
 
-        // 1. Хоминг
         if (_homingTarget != null)
         {
             Vector2 currentVelocity = rb.linearVelocity;
             Vector2 targetDirection = (_homingTarget.position - transform.position).normalized;
-            Vector2 newDirection = Vector2.Lerp(currentVelocity.normalized, targetDirection, homingStrength * Time.fixedDeltaTime);
+            Vector2 newDirection = Vector2.Lerp(
+                currentVelocity.normalized,
+                targetDirection,
+                homingStrength * Time.fixedDeltaTime
+            );
             rb.linearVelocity = newDirection * _currentSpeed;
         }
 
-        // 2. Анти-застревание
         Vector2 velocity = rb.linearVelocity;
         if (Mathf.Abs(velocity.y) < minVerticalVelocity)
         {
@@ -71,9 +80,15 @@ public class BallController : MonoBehaviour
     private void LaunchBall()
     {
         if (isLaunched || paddleTransform == null) return;
+
         isLaunched = true;
         transform.SetParent(null);
         rb.bodyType = RigidbodyType2D.Dynamic;
+
+        // --- ЗАПОМИНАЕМ ВРЕМЯ ЗАПУСКА ---
+        _launchTime = Time.time;
+        // --------------------------------
+
         float startX = Random.Range(0f, 1f) > 0.5f ? 1f : -1f;
         Vector2 direction = new Vector2(startX, 1f).normalized;
         rb.linearVelocity = direction * _currentSpeed;
@@ -83,9 +98,20 @@ public class BallController : MonoBehaviour
     {
         if (isLaunched && collision.gameObject.CompareTag("Paddle"))
         {
+            // --- ЗАЩИТА ОТ БАГА "ВНИЗ" ---
+            // Если с момента запуска прошло меньше 0.2 секунды,
+            // мы ИГНОРИРУЕМ расчет отскока от ракетки.
+            // Мяч полетит туда, куда его толкнул LaunchBall (то есть ВВЕРХ).
+            if (Time.time - _launchTime < 0.2f)
+            {
+                return;
+            }
+            // -----------------------------
+
             CalculateRebound(collision);
             return;
         }
+
         if (collision.gameObject.TryGetComponent(out IDamageable damageable))
         {
             damageable.TakeDamage(1);
@@ -114,9 +140,6 @@ public class BallController : MonoBehaviour
         _homingTarget = target;
     }
 
-    /// <summary>
-    /// Сбрасывает все режимы И ЗАПУСКАЕТ ТАЙМЕР
-    /// </summary>
     public void ResetMode()
     {
         _currentSpeed = initialSpeed;
@@ -124,7 +147,7 @@ public class BallController : MonoBehaviour
         isLaunched = false;
 
         rb.bodyType = RigidbodyType2D.Kinematic;
-        rb.linearVelocity = Vector2.zero; // Останавливаем мяч
+        rb.linearVelocity = Vector2.zero;
 
         if (paddleTransform != null)
         {
@@ -132,14 +155,7 @@ public class BallController : MonoBehaviour
             transform.localPosition = paddleOffset;
         }
 
-        // --- ГЛАВНЫЙ ФИКС ---
-        // 1. Останавливаем старый таймер (если он был)
-        if (_launchCoroutine != null)
-        {
-            StopCoroutine(_launchCoroutine);
-        }
-        // 2. Запускаем новый 3-секундный таймер
+        if (_launchCoroutine != null) StopCoroutine(_launchCoroutine);
         _launchCoroutine = StartCoroutine(LaunchDelayCoroutine());
-        // ------------------
     }
 }

@@ -10449,6 +10449,30 @@ PrefabInstance:
       propertyPath: manualBrickWidth
       value: 0.68
       objectReference: {fileID: 0}
+    - target: {fileID: 1026610208117489113, guid: 55808b017f9d7b448af68b91ce4d7ef4, type: 3}
+      propertyPath: levelBrickTypes.Array.size
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1026610208117489113, guid: 55808b017f9d7b448af68b91ce4d7ef4, type: 3}
+      propertyPath: 'levelBrickTypes.Array.data[0]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 05e1dea99e4a32c4da42c46af7096bb8, type: 2}
+    - target: {fileID: 1026610208117489113, guid: 55808b017f9d7b448af68b91ce4d7ef4, type: 3}
+      propertyPath: 'levelBrickTypes.Array.data[1]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 778a6176038e01045ac12e31c7bc7418, type: 2}
+    - target: {fileID: 1026610208117489113, guid: 55808b017f9d7b448af68b91ce4d7ef4, type: 3}
+      propertyPath: 'levelBrickTypes.Array.data[2]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 1b32e313edf569f46ad0fa2d8f26b50b, type: 2}
+    - target: {fileID: 1026610208117489113, guid: 55808b017f9d7b448af68b91ce4d7ef4, type: 3}
+      propertyPath: 'levelBrickTypes.Array.data[3]'
+      value: 
+      objectReference: {fileID: 11400000, guid: af5f8d44ae7d11442843c088ddd45ca3, type: 2}
+    - target: {fileID: 1026610208117489113, guid: 55808b017f9d7b448af68b91ce4d7ef4, type: 3}
+      propertyPath: 'levelBrickTypes.Array.data[4]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 704110acedeef3845b5e42e3135f09b5, type: 2}
     - target: {fileID: 5619140850588067120, guid: 55808b017f9d7b448af68b91ce4d7ef4, type: 3}
       propertyPath: m_Name
       value: LevelManager
