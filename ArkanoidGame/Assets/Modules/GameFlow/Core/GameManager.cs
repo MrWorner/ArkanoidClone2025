@@ -8,8 +8,6 @@ public class GameManager : MonoBehaviour
 
     [Header("Настройки Игры")]
     [SerializeField] private int startLives = 3;
-
-    [Header("Для Разработчика")]
     [SerializeField] private bool ignoreBottomWall = false;
 
     [Header("Ссылки")]
@@ -18,23 +16,17 @@ public class GameManager : MonoBehaviour
     [SerializeField] private UIManager uiManager;
     [SerializeField] private PowerUpPool powerUpPool;
 
-    [Header("Бонусы (Баланс)")]
-    [Tooltip("Сколько кирпичей нужно для ПЕРВОГО бонуса на уровне")]
+    [Header("Бонусы")]
     [SerializeField] private int startBricksForPowerUp = 10;
-
-    [Tooltip("На сколько увеличивать требование после каждого бонуса")]
     [SerializeField] private int powerUpStepIncrement = 5;
 
-    // --- Состояние Игры ---
     public int CurrentLives { get; private set; }
     public int CurrentScore { get; private set; }
 
     private int _currentLevel = 1;
     private int _activeBrickCount;
-
-    // Логика бонусов
     private int _bricksDestroyedCounter;
-    private int _currentPowerUpThreshold; // Динамический порог
+    private int _currentPowerUpThreshold;
 
     void Awake()
     {
@@ -55,7 +47,6 @@ public class GameManager : MonoBehaviour
         }
 
         Brick.OnAnyBrickDestroyed += HandleBrickDestroyed;
-
         StartNewGame();
     }
 
@@ -65,15 +56,14 @@ public class GameManager : MonoBehaviour
         CurrentScore = 0;
         _currentLevel = 1;
 
-        // Инициализируем UI
         uiManager.UpdateLives(CurrentLives);
         uiManager.UpdateScore(CurrentScore);
         uiManager.UpdateLevel(_currentLevel);
 
-        // Сбрасываем сложность бонусов перед первым уровнем
         ResetPowerUpLogic();
 
-        StartCoroutine(LoadLevel(_currentLevel));
+        // Первый запуск - сразу грузим уровень (без победы)
+        StartCoroutine(LoadLevelRoutine(_currentLevel, false));
     }
 
     // --- PUBLIC METHODS ---
@@ -89,6 +79,7 @@ public class GameManager : MonoBehaviour
         if (uiManager != null) uiManager.UpdateScore(CurrentScore);
     }
 
+    // --- ИСПРАВЛЕНИЕ #1: Гарантия скорости ---
     public void ActivateTripleBall()
     {
         List<BallController> activeBalls = ballPool.GetActiveBalls();
@@ -99,16 +90,26 @@ public class GameManager : MonoBehaviour
         {
             if (sourceBall == null || !sourceBall.gameObject.activeSelf) continue;
 
-            Vector2 velocity = sourceBall.GetComponent<Rigidbody2D>().linearVelocity;
+            // 1. Берем текущую скорость
+            Vector2 currentVelocity = sourceBall.GetComponent<Rigidbody2D>().linearVelocity;
+
+            // 2. Если мяч вдруг замедлился, берем "стандартную" скорость (7f)
+            // Это гарантирует, что клоны вылетят бодро.
+            float speed = currentVelocity.magnitude;
+            if (speed < 5f) speed = 7f; // Минимальный порог
+
+            Vector2 direction = currentVelocity.normalized;
             Vector3 position = sourceBall.transform.position;
 
-            Vector2 dir1 = Quaternion.Euler(0, 0, -20) * velocity;
-            ballPool.GetBall().SpawnAsClone(position, dir1);
+            // 3. Создаем векторы, умножая НАПРАВЛЕНИЕ на СКОРОСТЬ
+            Vector2 dir1 = (Quaternion.Euler(0, 0, -20) * direction) * speed;
+            Vector2 dir2 = (Quaternion.Euler(0, 0, 20) * direction) * speed;
 
-            Vector2 dir2 = Quaternion.Euler(0, 0, 20) * velocity;
+            ballPool.GetBall().SpawnAsClone(position, dir1);
             ballPool.GetBall().SpawnAsClone(position, dir2);
         }
     }
+    // ----------------------------------------
 
     public void HandleBallLost(BallController ball)
     {
@@ -121,48 +122,30 @@ public class GameManager : MonoBehaviour
 
     private void HandleBrickDestroyed(Vector3 brickPos)
     {
-        // 1. Уменьшаем кол-во оставшихся кирпичей
         _activeBrickCount--;
 
-        // --- ИСПРАВЛЕНИЕ #2: Сначала проверяем победу! ---
+        // --- ИСПРАВЛЕНИЕ #2: Победная последовательность ---
         if (_activeBrickCount <= 0)
         {
-            _currentLevel++;
-            if (uiManager != null) uiManager.UpdateLevel(_currentLevel);
-            StartCoroutine(LoadLevel(_currentLevel));
-
-            // ВАЖНО: Делаем return, чтобы бонус НЕ выпал на последнем кирпиче
+            // Запускаем победную корутину вместо мгновенной загрузки
+            StartCoroutine(VictorySequence());
             return;
         }
         // ------------------------------------------------
 
-        // 2. Логика бонусов (если уровень еще не пройден)
         _bricksDestroyedCounter++;
-
-        // --- ИСПРАВЛЕНИЕ #1: Динамический шаг ---
         if (_bricksDestroyedCounter >= _currentPowerUpThreshold)
         {
-            SpawnPowerUp(brickPos);
-
-            // Сбрасываем счетчик
+            powerUpPool.GetPowerUp(brickPos);
             _bricksDestroyedCounter = 0;
-
-            // Увеличиваем сложность (10 -> 15 -> 20...)
             _currentPowerUpThreshold += powerUpStepIncrement;
-            Debug.Log($"GameManager: Бонус выпал! Следующий через {_currentPowerUpThreshold} кирпичей.");
         }
-        // ----------------------------------------
-    }
-
-    private void SpawnPowerUp(Vector3 spawnPos)
-    {
-        powerUpPool.GetPowerUp(spawnPos);
     }
 
     private void ResetPowerUpLogic()
     {
         _bricksDestroyedCounter = 0;
-        _currentPowerUpThreshold = startBricksForPowerUp; // Сброс к 10
+        _currentPowerUpThreshold = startBricksForPowerUp;
     }
 
     private void LoseLife()
@@ -189,38 +172,65 @@ public class GameManager : MonoBehaviour
         newBall.ResetToPaddle();
     }
 
-    private IEnumerator LoadLevel(int level)
+    // --- НОВАЯ ПОБЕДНАЯ КОРУТИНА ---
+    private IEnumerator VictorySequence()
     {
-        Debug.Log($"Loading Level {level}...");
+        Debug.Log("VICTORY!");
 
-        // --- ИСПРАВЛЕНИЕ #3: Принудительно показываем UI здесь ---
-        // Это гарантирует, что надпись появится перед любой другой логикой
+        // 1. Сразу убираем все мячи и бонусы
+        ballPool.ReturnAllBalls();
+        powerUpPool.ReturnAllActive();
+
+        // 2. Показываем надпись VICTORY
+        // (Старые кирпичи всё еще на экране, как вы просили!)
         if (uiManager != null)
+        {
+            uiManager.ShowVictory(true);
+        }
+
+        // 3. Ждем 2 секунды, пока игрок радуется
+        yield return new WaitForSeconds(2f);
+
+        // 4. Скрываем Victory
+        if (uiManager != null)
+        {
+            uiManager.ShowVictory(false);
+        }
+
+        // 5. Повышаем уровень
+        _currentLevel++;
+        if (uiManager != null) uiManager.UpdateLevel(_currentLevel);
+
+        // 6. Запускаем стандартную загрузку нового уровня
+        StartCoroutine(LoadLevelRoutine(_currentLevel, true));
+    }
+
+    private IEnumerator LoadLevelRoutine(int level, bool showTransition)
+    {
+        // 1. Показываем черный экран "Level N"
+        if (showTransition && uiManager != null)
         {
             uiManager.ShowLevelTransition($"Level {level}");
         }
-        // ---------------------------------------------------------
 
-        // Чистим поле
-        ballPool.ReturnAllBalls();
-        powerUpPool.ReturnAllActive(); // Убираем старые бонусы
-
-        // Сбрасываем логику спавна бонусов для нового уровня
-        ResetPowerUpLogic();
-
-        // Строим уровень
+        // 2. ВОТ ТУТ мы строим новый уровень (старые кирпичи исчезают только сейчас)
         if (levelManager != null)
         {
-            // Для теста используем хаос, но в реальной игре можно чередовать
             levelManager.BuildChaosLevel();
         }
 
+        // Сброс бонусов
+        ResetPowerUpLogic();
+
+        // 3. Спавним мяч (он ждет на ракетке под черным экраном)
         RespawnMainBall();
 
-        // Ждем 2 секунды (игрок видит надпись Level X)
-        yield return new WaitForSeconds(2f);
-
-        if (uiManager != null) uiManager.HideLevelTransition();
+        // 4. Ждем 2 секунды
+        if (showTransition)
+        {
+            yield return new WaitForSeconds(2f);
+            if (uiManager != null) uiManager.HideLevelTransition();
+        }
     }
 
     private void OnDestroy()

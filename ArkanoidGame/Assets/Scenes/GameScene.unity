@@ -980,22 +980,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Paddle
       objectReference: {fileID: 0}
-    - target: {fileID: 6109603886019377999, guid: db5556af0186f2245a717270fea6bb87, type: 3}
-      propertyPath: m_Size.x
-      value: 2.56
-      objectReference: {fileID: 0}
-    - target: {fileID: 6109603886019377999, guid: db5556af0186f2245a717270fea6bb87, type: 3}
-      propertyPath: m_Size.y
-      value: 1.28
-      objectReference: {fileID: 0}
-    - target: {fileID: 6109603886019377999, guid: db5556af0186f2245a717270fea6bb87, type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: 21300000, guid: dd71d12ed7bfbd74a9eb30456fce9fb6, type: 3}
-    - target: {fileID: 6109603886019377999, guid: db5556af0186f2245a717270fea6bb87, type: 3}
-      propertyPath: m_WasSpriteAssigned
-      value: 1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1135,8 +1119,7 @@ PrefabInstance:
       propertyPath: m_Name
       value: BoundaryManager
       objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 5809312664003969164, guid: 8414a4dcfbedd234ab023830a2ef68e4, type: 3}
+    m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
