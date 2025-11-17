@@ -21,8 +21,28 @@ public class BrickChunkImporter : OdinEditorWindow
     {
         if (sourceFile == null || textMap == null) return;
 
+        // --- ИСПРАВЛЕНИЕ ПУТИ ---
+        // 1. Превращаем абсолютный путь (C:/...) в относительный (Assets/...)
+        string relativePath = outputPath;
+        if (relativePath.StartsWith(Application.dataPath))
+        {
+            relativePath = "Assets" + relativePath.Substring(Application.dataPath.Length);
+        }
+
+        // 2. Убедимся, что папка существует, иначе CreateAsset выдаст ошибку
+        if (!AssetDatabase.IsValidFolder(relativePath))
+        {
+            string parentFolder = System.IO.Path.GetDirectoryName(relativePath);
+            string newFolder = System.IO.Path.GetFileName(relativePath);
+            // Если папки нет - это сложнее создать через AssetDatabase, 
+            // поэтому просто используем System.IO для надежности, но CreateAsset любит существующие папки.
+            // Самый простой способ для Editor-скрипта:
+            System.IO.Directory.CreateDirectory(outputPath); // Создаем физически
+            AssetDatabase.Refresh(); // Обновляем Unity, чтобы он увидел папку
+        }
+        // ------------------------
+
         string text = sourceFile.text;
-        // Разделяем на блоки по двойному переносу строки
         string[] blocks = text.Split(new[] { "\r\n\r\n", "\n\n" }, System.StringSplitOptions.RemoveEmptyEntries);
 
         int count = 0;
@@ -32,13 +52,12 @@ public class BrickChunkImporter : OdinEditorWindow
             string[] lines = block.Split(new[] { '\r', '\n' }, System.StringSplitOptions.RemoveEmptyEntries);
             if (lines.Length < 2) continue;
 
-            // 1. Имя чанка (первая строка)
             string rawName = lines[0].Trim();
-            // Убираем "Chunk XX" если есть, оставляем суть
             string safeName = Regex.Replace(rawName, @"[^a-zA-Z0-9_]", "");
 
-            // 2. Создаем или загружаем SO
-            string path = $"{outputPath}/Chunk_{safeName}.asset";
+            // ИСПРАВЛЕНО: Используем relativePath вместо outputPath
+            string path = $"{relativePath}/Chunk_{safeName}.asset";
+
             BrickChunkSO chunk = AssetDatabase.LoadAssetAtPath<BrickChunkSO>(path);
 
             if (chunk == null)
@@ -48,30 +67,25 @@ public class BrickChunkImporter : OdinEditorWindow
             }
 
             chunk.bricks.Clear();
-            chunk.width = 6; // Жестко задаем, или вычисляем dynamic
-            chunk.height = lines.Length - 1; // Минус заголовок
-
-            // 3. Парсим сетку (читаем СНИЗУ ВВЕРХ, чтобы Y=0 был внизу, как в Unity Grid)
-            // Но в текстовом файле визуально верх - это верх.
-            // LevelManager обычно строит rows 0..N.
-            // Давайте читать как есть: строка 1 файла = row (Max), последняя строка = row 0.
+            chunk.width = 6;
+            chunk.height = lines.Length - 1;
 
             int dataLinesCount = lines.Length - 1;
 
             for (int y = 0; y < dataLinesCount; y++)
             {
-                string line = lines[y + 1]; // +1 пропускаем заголовок
-                // Удаляем скобки []
+                string line = lines[y + 1];
                 string cleanLine = line.Replace("[", "").Replace("]", "");
 
-                // В Unity Y=0 это низ. В файле первая строка это верх.
-                // Значит Y файла нужно инвертировать для Unity координат.
                 int gridY = (dataLinesCount - 1) - y;
 
                 for (int x = 0; x < cleanLine.Length; x++)
                 {
+                    // Защита от выхода за границы строки (если в файле ошибка)
+                    if (x >= cleanLine.Length) break;
+
                     char symbol = cleanLine[x];
-                    BrickTypeSO type = textMap.GetBrickType(symbol);
+                    BrickTypeSO type = textMap.GetBrickType(symbol); // У вас BrickTypeSO теперь
 
                     if (type != null)
                     {
@@ -89,6 +103,6 @@ public class BrickChunkImporter : OdinEditorWindow
         }
 
         AssetDatabase.SaveAssets();
-        Debug.Log($"<b>[Importer]</b> Processed {count} chunks!");
+        Debug.Log($"<b>[Importer]</b> Processed {count} chunks successfully at {relativePath}!");
     }
 }
