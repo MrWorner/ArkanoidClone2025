@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using TMPro; // Важно для TextMeshPro
+using TMPro;
 
 public class UIManager : MonoBehaviour
 {
@@ -7,27 +7,37 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI scoreText;
     [SerializeField] private TextMeshProUGUI livesText;
 
+    // --- НОВОЕ ПОЛЕ ---
+    [SerializeField] private TextMeshProUGUI levelText;
+    // ------------------
+
     [Header("Экраны")]
     [SerializeField] private GameObject gameOverScreen;
     [SerializeField] private GameObject levelTransitionScreen;
     [SerializeField] private TextMeshProUGUI levelTransitionText;
 
-    void Awake()
+    void Start()
     {
-        // Прячем все экраны при старте
         gameOverScreen.SetActive(false);
         levelTransitionScreen.SetActive(false);
     }
 
     public void UpdateScore(int score)
     {
-        scoreText.text = $"SCORE: {score}";
+        if (scoreText != null) scoreText.text = $"SCORE: {score}";
     }
 
     public void UpdateLives(int lives)
     {
-        livesText.text = $"LIVES: {lives}";
+        if (livesText != null) livesText.text = $"LIVES: {lives}";
     }
+
+    // --- НОВЫЙ МЕТОД ---
+    public void UpdateLevel(int level)
+    {
+        if (levelText != null) levelText.text = $"LEVEL: {level}";
+    }
+    // -------------------
 
     public void ShowGameOver(bool show)
     {

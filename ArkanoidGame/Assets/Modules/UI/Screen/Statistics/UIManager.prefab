@@ -944,6 +944,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UIManager
   scoreText: {fileID: 978312892956351180}
   livesText: {fileID: 8721921377921630259}
+  levelText: {fileID: 1470637221862360852}
   gameOverScreen: {fileID: 4247749427980496240}
   levelTransitionScreen: {fileID: 3336164696829461933}
   levelTransitionText: {fileID: 5312137031928119804}
