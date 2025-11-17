@@ -47,12 +47,12 @@ MonoBehaviour:
   brickPool: {fileID: 0}
   rows: 12
   cols: 12
+  brickWidth: 0.69333
+  brickHeight: 0.34666
   levelBrickTypes:
   - {fileID: 11400000, guid: 05e1dea99e4a32c4da42c46af7096bb8, type: 2}
   - {fileID: 11400000, guid: 778a6176038e01045ac12e31c7bc7418, type: 2}
   - {fileID: 11400000, guid: 1b32e313edf569f46ad0fa2d8f26b50b, type: 2}
   - {fileID: 11400000, guid: af5f8d44ae7d11442843c088ddd45ca3, type: 2}
   - {fileID: 11400000, guid: 704110acedeef3845b5e42e3135f09b5, type: 2}
-  useManualSpacing: 1
-  manualBrickWidth: 0.68
-  manualBrickHeight: 0.34
+  - {fileID: 11400000, guid: f792d26d4837aa74399396d9c6dc2edb, type: 2}

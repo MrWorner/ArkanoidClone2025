@@ -19,8 +19,8 @@ public class LevelManager : MonoBehaviour
     [SerializeField] private float brickHeight = 0.34666f;
 
     [Header("Типы Кирпичей (Brick Types)")]
-    [Tooltip("Перетащите сюда ваши ассеты BrickType (Blue, Red, Steel)")]
-    [SerializeField] private List<BrickType> levelBrickTypes;
+    [Tooltip("Перетащите сюда ваши ассеты BrickTypeSO (Blue, Red, Steel)")]
+    [SerializeField] private List<BrickTypeSO> levelBrickTypes;
 
     void Start()
     {
@@ -88,7 +88,7 @@ public class LevelManager : MonoBehaviour
                 }
 
                 // Б. Выбираем случайный тип
-                BrickType randomType = levelBrickTypes[Random.Range(0, levelBrickTypes.Count)];
+                BrickTypeSO randomType = levelBrickTypes[Random.Range(0, levelBrickTypes.Count)];
 
                 // В. Настраиваем кирпич (Спрайт, Цвет, HP)
                 newBrick.Setup(randomType);

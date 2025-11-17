@@ -100,19 +100,21 @@ public class BrickPool : MonoBehaviour
     /// </summary>
     public void DestroyAllBricksEditor()
     {
-        // Сначала "чистим" список от пустых ссылок
-        _allManagedBricks.RemoveAll(item => item == null);
+        // 1. Сначала очищаем сам список (он нам больше не нужен для удаления)
+        _allManagedBricks.Clear();
 
-        // Уничтожаем объекты
-        foreach (Brick brick in _allManagedBricks)
+        // 2. "Ядерная чистка": Удаляем все дочерние объекты пула.
+        // Мы используем while, потому что childCount меняется при каждом удалении.
+        while (transform.childCount > 0)
         {
-            if (brick != null)
-            {
-                DestroyImmediate(brick.gameObject);
-            }
+            // Берем первого ребенка
+            Transform child = transform.GetChild(0);
+
+            // Уничтожаем его немедленно
+            DestroyImmediate(child.gameObject);
         }
 
-        _allManagedBricks.Clear();
+        Debug.Log("BrickPool: Очистка в редакторе завершена (по иерархии).");
     }
 
     /// <summary>

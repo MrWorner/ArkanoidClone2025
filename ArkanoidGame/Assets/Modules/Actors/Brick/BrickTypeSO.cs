@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 
 [CreateAssetMenu(fileName = "NewBrickType", menuName = "Arkanoid/Brick Type")]
-public class BrickType : ScriptableObject
+public class BrickTypeSO : ScriptableObject
 {
     [Header("Визуал")]
     public Sprite sprite;

@@ -5,7 +5,7 @@ public class Brick : MonoBehaviour, IDamageable
     public static event System.Action OnAnyBrickDestroyed;
 
     private BrickPool _pool;
-    [SerializeField] private BrickType _brickType;
+    [SerializeField] private BrickTypeSO _brickType;
     private SpriteRenderer _spriteRenderer;
     private int _currentHealth;
 
@@ -22,20 +22,32 @@ public class Brick : MonoBehaviour, IDamageable
     /// <summary>
     /// "Настраивает" кирпич, когда его берут из пула.
     /// </summary>
-    public void Setup(BrickType type)
+    public void Setup(BrickTypeSO type)
     {
         _brickType = type;
 
-        // 1. Устанавливаем спрайт
-        _spriteRenderer.sprite = _brickType.sprite;
+        // --- ИСПРАВЛЕНИЕ ЗДЕСЬ ---
+        // Если мы в Редакторе и Awake еще не сработал, _spriteRenderer будет null.
+        // Мы находим его вручную.
+        if (_spriteRenderer == null)
+        {
+            _spriteRenderer = GetComponent<SpriteRenderer>();
+        }
+        // -------------------------
 
-        // --- НОВАЯ СТРОКА ---
-        // 2. Устанавливаем цвет (tint)
-        _spriteRenderer.color = _brickType.color;
-        // --------------------
+        // Теперь безопасно используем
+        if (_spriteRenderer != null)
+        {
+            _spriteRenderer.sprite = _brickType.sprite;
+            _spriteRenderer.color = _brickType.color;
+        }
 
-        // 3. Устанавливаем "здоровье"
         _currentHealth = _brickType.health;
+
+        if (_brickType.isIndestructible)
+        {
+            Debug.Log("<color=red>IT WORKS!</color>", this);
+        }
     }
 
     /// <summary>
@@ -46,7 +58,7 @@ public class Brick : MonoBehaviour, IDamageable
         // ЗАЩИТА: Если тип потерялся, просто уничтожаем кирпич, чтобы не ломать игру
         if (_brickType == null)
         {
-            Debug.LogError($"Brick {name}: BrickType потерян! Уничтожаю объект.");
+            Debug.LogError($"Brick {name}: BrickTypeSO потерян! Уничтожаю объект.");
             gameObject.SetActive(false);
             return;
         }
