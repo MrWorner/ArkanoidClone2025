@@ -39,17 +39,15 @@ public class AnchorToBottom : MonoBehaviour
         }
     }
 
-    // --- НОВЫЙ МЕТОД ---
-    /// <summary>
-    /// Срабатывает, когда в триггер входит ДРУГОЙ коллайдер
-    /// </summary>
     private void OnTriggerEnter2D(Collider2D other)
     {
-        // Проверяем, что это "Мяч"
         if (other.CompareTag("Ball"))
         {
-            // Говорим "Мозгу", что мы потеряли мяч
-            GameManager.Instance.HandleBallLost();
+            BallController ball = other.GetComponent<BallController>();
+            if (ball != null)
+            {
+                GameManager.Instance.HandleBallLost(ball);
+            }
         }
     }
 }

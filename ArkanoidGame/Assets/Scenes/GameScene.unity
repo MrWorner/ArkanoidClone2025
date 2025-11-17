@@ -263,11 +263,27 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5205469290284788657, guid: 1eb7ad7719cdcbf42820e45af3992caf, type: 3}
   m_PrefabInstance: {fileID: 8690058891843646599}
   m_PrefabAsset: {fileID: 0}
+--- !u!4 &532792508 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1206107824740460148, guid: 31b947a024ac7d5458cc572d9fc8a784, type: 3}
+  m_PrefabInstance: {fileID: 4106992945149385533}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &611674790 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4062857119808838887, guid: 8414a4dcfbedd234ab023830a2ef68e4, type: 3}
   m_PrefabInstance: {fileID: 3791787240688241375}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &713659900 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8375894251854853843, guid: 31b947a024ac7d5458cc572d9fc8a784, type: 3}
+  m_PrefabInstance: {fileID: 4106992945149385533}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e87480379087de4b9a8ae5461233dbd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BallPool
 --- !u!4 &753575388 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1629756453871314828, guid: db5556af0186f2245a717270fea6bb87, type: 3}
@@ -350,6 +366,52 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1520182292}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1075799699
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1075799700}
+  - component: {fileID: 1075799701}
+  m_Layer: 0
+  m_Name: PowerUpPool
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1075799700
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1075799699}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 4.66701, y: 18.91862, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1520182292}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1075799701
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1075799699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d8f8528b9a763244886db2d22ccf120, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PowerUpPool
+  powerUpPrefab: {fileID: 1338356915224973385, guid: 75334a2cfbedaea46b5f72461605615c, type: 3}
+  initialPoolSize: 3
 --- !u!1 &1133439726
 GameObject:
   m_ObjectHideFlags: 0
@@ -489,7 +551,9 @@ Transform:
   - {fileID: 753575388}
   - {fileID: 3182443585071965243}
   - {fileID: 100108098}
+  - {fileID: 532792508}
   - {fileID: 1532743586}
+  - {fileID: 1075799700}
   - {fileID: 773594730}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -933,6 +997,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: Paddle
       objectReference: {fileID: 0}
+    - target: {fileID: 6109603886019377999, guid: db5556af0186f2245a717270fea6bb87, type: 3}
+      propertyPath: m_Size.x
+      value: 2.56
+      objectReference: {fileID: 0}
+    - target: {fileID: 6109603886019377999, guid: db5556af0186f2245a717270fea6bb87, type: 3}
+      propertyPath: m_Size.y
+      value: 1.28
+      objectReference: {fileID: 0}
+    - target: {fileID: 6109603886019377999, guid: db5556af0186f2245a717270fea6bb87, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: dd71d12ed7bfbd74a9eb30456fce9fb6, type: 3}
+    - target: {fileID: 6109603886019377999, guid: db5556af0186f2245a717270fea6bb87, type: 3}
+      propertyPath: m_WasSpriteAssigned
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -951,9 +1031,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1745485442}
     - target: {fileID: 4527935324743154748, guid: 7fe4eb077c4c6ad4b8335bfbb581f801, type: 3}
+      propertyPath: ballPool
+      value: 
+      objectReference: {fileID: 713659900}
+    - target: {fileID: 4527935324743154748, guid: 7fe4eb077c4c6ad4b8335bfbb581f801, type: 3}
       propertyPath: uiManager
       value: 
       objectReference: {fileID: 9049856953552123500}
+    - target: {fileID: 4527935324743154748, guid: 7fe4eb077c4c6ad4b8335bfbb581f801, type: 3}
+      propertyPath: powerUpPool
+      value: 
+      objectReference: {fileID: 1075799701}
     - target: {fileID: 4527935324743154748, guid: 7fe4eb077c4c6ad4b8335bfbb581f801, type: 3}
       propertyPath: levelManager
       value: 
@@ -1078,6 +1166,63 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8414a4dcfbedd234ab023830a2ef68e4, type: 3}
+--- !u!1001 &4106992945149385533
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1520182292}
+    m_Modifications:
+    - target: {fileID: 1206107824740460148, guid: 31b947a024ac7d5458cc572d9fc8a784, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 4.66701
+      objectReference: {fileID: 0}
+    - target: {fileID: 1206107824740460148, guid: 31b947a024ac7d5458cc572d9fc8a784, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 18.91862
+      objectReference: {fileID: 0}
+    - target: {fileID: 1206107824740460148, guid: 31b947a024ac7d5458cc572d9fc8a784, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1206107824740460148, guid: 31b947a024ac7d5458cc572d9fc8a784, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1206107824740460148, guid: 31b947a024ac7d5458cc572d9fc8a784, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1206107824740460148, guid: 31b947a024ac7d5458cc572d9fc8a784, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1206107824740460148, guid: 31b947a024ac7d5458cc572d9fc8a784, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1206107824740460148, guid: 31b947a024ac7d5458cc572d9fc8a784, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1206107824740460148, guid: 31b947a024ac7d5458cc572d9fc8a784, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1206107824740460148, guid: 31b947a024ac7d5458cc572d9fc8a784, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2471943041260170110, guid: 31b947a024ac7d5458cc572d9fc8a784, type: 3}
+      propertyPath: m_Name
+      value: BallPool
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 31b947a024ac7d5458cc572d9fc8a784, type: 3}
 --- !u!1001 &4191735169109371111
 PrefabInstance:
   m_ObjectHideFlags: 0

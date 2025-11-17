@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &7004576548207647159
+--- !u!1 &2471943041260170110
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,47 +8,41 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 4889334086753195399}
-  - component: {fileID: 4527935324743154748}
+  - component: {fileID: 1206107824740460148}
+  - component: {fileID: 8375894251854853843}
   m_Layer: 0
-  m_Name: GameManager
+  m_Name: BallPool
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &4889334086753195399
+--- !u!4 &1206107824740460148
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7004576548207647159}
+  m_GameObject: {fileID: 2471943041260170110}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 4.31379, y: 9.73801, z: 0}
+  m_LocalPosition: {x: 4.66701, y: 18.91862, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4527935324743154748
+--- !u!114 &8375894251854853843
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7004576548207647159}
+  m_GameObject: {fileID: 2471943041260170110}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 69bf174fb63a72a44b69442d97bd823f, type: 3}
+  m_Script: {fileID: 11500000, guid: 2e87480379087de4b9a8ae5461233dbd, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  startLives: 3
-  ignoreBottomWall: 0
-  ballPool: {fileID: 0}
-  levelManager: {fileID: 0}
-  uiManager: {fileID: 0}
-  powerUpPool: {fileID: 0}
-  minBricksForPowerUp: 5
-  maxBricksForPowerUp: 10
+  m_EditorClassIdentifier: Assembly-CSharp::BallPool
+  ballPrefab: {fileID: 1570393369815119157, guid: 395266af54238694387d72b4917284fa, type: 3}
+  initialPoolSize: 5
