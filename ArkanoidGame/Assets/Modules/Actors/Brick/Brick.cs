@@ -8,6 +8,7 @@ public class Brick : MonoBehaviour, IDamageable
     [SerializeField] private BrickTypeSO _brickType;
     private SpriteRenderer _spriteRenderer;
     private int _currentHealth;
+    public bool IsIndestructible => _brickType != null && _brickType.isIndestructible;
 
     void Awake()
     {
