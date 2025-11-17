@@ -200,15 +200,20 @@ public class LevelManager : MonoBehaviour
 
     private void OverlayObstaclesLayer()
     {
+        // Проверка галочки enableObstacles происходит в BuildLevel, здесь дублировать не обязательно, но можно
         if (obstacleChunks == null || obstacleChunks.Count == 0) return;
 
-        // 1. Тоже используем распределение для препятствий!
-        // Теперь препятствия тоже могут быть разными в разных углах
         List<BrickChunkSO> templates = GetDistributedTemplates(obstacleChunks, obstacleTemplateCount);
 
         Debug.Log($"<b>[LevelGen]</b> Obs [{obstacleTemplateCount}]: {string.Join(", ", templates.Select(c => c.name).Distinct())}");
 
-        // Квадранты (TL, TR, BL, BR)
+        // --- НУЖНО РАССЧИТАТЬ ПОЗИЦИЮ (как в Geometry) ---
+        Vector2 currentCenter = transform.position;
+        float totalW = COLS * brickWidth;
+        float totalH = ROWS * brickHeight;
+        Vector2 startPos = new Vector2(currentCenter.x - (totalW / 2f), currentCenter.y + (totalH / 2f));
+        // ------------------------------------------------
+
         List<Vector2Int> quadrants = new List<Vector2Int>
         { new Vector2Int(0, 0), new Vector2Int(6, 0), new Vector2Int(0, 6), new Vector2Int(6, 6) };
 
@@ -217,13 +222,13 @@ public class LevelManager : MonoBehaviour
             BrickChunkSO chunk = templates[i];
             Vector2Int offset = quadrants[i];
 
-            // Для препятствий тоже включим случайные флипы, раз у нас Chaos-подход
-            // Или можно сделать фиксированно, если хотите порядка. 
-            // Сделаем случайно для веселья:
+            // В режиме Chaos - случайно, иначе можно фиксировано
+            // Для Obstacles часто лучше фиксировано, но оставим как есть для единообразия
             bool flipX = Random.value > 0.5f;
             bool flipY = Random.value > 0.5f;
 
-            ApplyObstacleQuadrant(chunk, offset.x, offset.y, flipX, flipY);
+            // Передаем startPos в метод
+            ApplyObstacleQuadrant(chunk, offset.x, offset.y, flipX, flipY, startPos);
         }
     }
 
@@ -280,18 +285,43 @@ public class LevelManager : MonoBehaviour
         }
     }
 
-    private void ApplyObstacleQuadrant(BrickChunkSO chunk, int offsetX, int offsetY, bool flipX, bool flipY)
+    private void ApplyObstacleQuadrant(BrickChunkSO chunk, int offsetX, int offsetY, bool flipX, bool flipY, Vector2 startPos)
     {
         foreach (var data in chunk.bricks)
         {
-            int cx = data.position.x; int cy = data.position.y;
+            int cx = data.position.x;
+            int cy = data.position.y;
             if (flipX) cx = (chunk.width - 1) - cx;
             if (flipY) cy = (chunk.height - 1) - cy;
-            int col = offsetX + cx; int row = offsetY + (chunk.height - 1 - cy);
+
+            int col = offsetX + cx;
+            int row = offsetY + (chunk.height - 1 - cy);
+
             if (col >= 0 && col < COLS && row >= 0 && row < ROWS)
             {
                 Brick existingBrick = _spawnedGrid[col, row];
-                if (existingBrick != null) existingBrick.Setup(indestructibleType);
+
+                // ВАРИАНТ 1: Кирпич уже есть - меняем тип
+                if (existingBrick != null)
+                {
+                    existingBrick.Setup(indestructibleType);
+                }
+                // ВАРИАНТ 2: Пустота - создаем новый (ЭТОГО НЕ БЫЛО)
+                else
+                {
+                    Brick newBrick = Application.isPlaying ? brickPool.GetBrick() : brickPool.GetBrickEditor();
+
+                    // Настраиваем как неубиваемый
+                    newBrick.Setup(indestructibleType);
+
+                    // Ставим на позицию
+                    float xPos = startPos.x + (col * brickWidth);
+                    float yPos = startPos.y - (row * brickHeight);
+                    newBrick.transform.position = new Vector2(xPos, yPos);
+
+                    // Записываем в сетку
+                    _spawnedGrid[col, row] = newBrick;
+                }
             }
         }
     }

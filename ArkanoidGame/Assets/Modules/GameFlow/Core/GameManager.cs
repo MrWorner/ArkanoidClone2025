@@ -129,41 +129,41 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private IEnumerator LoadLevel(int level)
     {
-        Debug.Log($"GameManager: LoadLevel({level}) - Начало загрузки...");
+        Debug.Log($"GameManager: LoadLevel({level}) - Начало...");
 
-        // 1. Проверяем мяч
-        if (ball == null)
+        // 1. Сначала показываем экран перехода (чтобы скрыть момент перестройки, если нужно)
+        if (uiManager != null)
         {
-            Debug.LogError("GameManager: Не могу спрятать 'ball', 'ball' = null.");
-            yield break; // Прерываем корутину
+            uiManager.ShowLevelTransition($"Level {level}");
         }
-        ball.ResetMode();
-        ball.gameObject.SetActive(false);
 
-        // 2. Проверяем UI
-        if (uiManager == null)
+        // 2. МГНОВЕННО строим новый уровень (это удалит старые кирпичи)
+        if (levelManager != null)
         {
-            Debug.LogError("GameManager: Не могу показать 'Level Transition', 'uiManager' = null.");
-            yield break; // Прерываем корутину
+            // Если хотите больше случайности при каждом уровне - вызывайте Random
+            levelManager.BuildChaosLevel();
+            // Или обычный BuildLevel(), если настройки меняются только по кнопке
+            // levelManager.BuildLevel();
         }
-        uiManager.ShowLevelTransition($"Level {level}");
-        Debug.Log("GameManager: Показываю экран 'Level 1'");
 
-        yield return new WaitForSeconds(2f); // Ждем 2 сек
-
-        // 3. Проверяем LevelManager
-        if (levelManager == null)
+        // 3. МГНОВЕННО сажаем мяч на ракетку
+        if (ball != null)
         {
-            Debug.LogError("GameManager: Не могу построить уровень, 'levelManager' = null.");
-            yield break; // Прерываем корутину
+            ball.gameObject.SetActive(true); // Убедимся, что он виден
+            ball.ResetMode(); // Приклеиваем к ракетке
         }
-        levelManager.BuildLevel();
 
-        uiManager.HideLevelTransition();
+        // 4. Теперь, когда всё готово, ЖДЕМ.
+        // Игрок видит надпись "Level 2", а за ней уже стоит новый уровень и мяч на месте.
+        yield return new WaitForSeconds(2f);
 
-        ball.gameObject.SetActive(true);
-        ball.ResetMode(); // ResetMode() ТЕПЕРЬ сам запускает таймер
-        Debug.Log($"GameManager: LoadLevel({level}) - Загрузка завершена. Мяч на ракетке.");
+        // 5. Убираем надпись и начинаем игру
+        if (uiManager != null)
+        {
+            uiManager.HideLevelTransition();
+        }
+
+        Debug.Log($"GameManager: Уровень {level} начат.");
     }
 
     // Не забываем отписаться
