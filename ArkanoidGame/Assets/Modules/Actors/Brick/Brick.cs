@@ -11,6 +11,7 @@ public class Brick : MonoBehaviour, IDamageable
     private BrickPool _pool;
     private SpriteRenderer _spriteRenderer;
     private int _currentHealth;
+    private bool _isDestroyed = false;
 
     public BrickTypeSO BrickType { get => _brickType; set => _brickType = value; }
 
@@ -35,25 +36,29 @@ public class Brick : MonoBehaviour, IDamageable
             _spriteRenderer.color = _brickType.color;
         }
         _currentHealth = _brickType != null ? _brickType.health : 1;
+        _isDestroyed = false; // Сбрасываем флаг при респавне из пула!
     }
 
     public void TakeDamage(int damageAmount)
     {
-        if (_brickType == null) { gameObject.SetActive(false); return; }
+        // 1. Если уже уничтожен или нет типа - выходим
+        if (_isDestroyed || _brickType == null) return;
+
         if (_brickType.isIndestructible) return;
 
         _currentHealth -= damageAmount;
 
         if (_currentHealth <= 0)
         {
+            // 2. Ставим флаг, чтобы второй мяч не мог зайти сюда
+            _isDestroyed = true;
+
             if (GameManager.Instance != null)
             {
                 GameManager.Instance.AddScore(_brickType.points);
             }
 
-            // --- ИЗМЕНЕНИЕ 2: Передаем позицию при смерти ---
             OnAnyBrickDestroyed?.Invoke(transform.position);
-            // ------------------------------------------------
 
             if (_pool != null) _pool.ReturnBrick(this);
             else gameObject.SetActive(false);
