@@ -52,6 +52,7 @@ public class LevelSelectView : BaseView, IDataView<int>
     {
         // Можно добавить анимацию текста через DOTween punch
         _levelText.transform.DOKill();
+        _levelText.transform.localScale = Vector3.one;
         _levelText.text = $"Level {currentLevel}";
         _levelText.transform.DOPunchScale(Vector3.one * 0.1f, 0.2f);
     }
