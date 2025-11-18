@@ -60,6 +60,7 @@ public class Brick : MonoBehaviour, IDamageable
         if (_isDestroyed || _brickType == null) return;
         if (_brickType.isIndestructible)
         {
+            SoundManager.Instance.PlayOneShot(SoundType.IndestructibleHit);
             // Бонус: Анимация "дрожания" для неубиваемого блока
             transform.DOShakePosition(0.2f, 0.1f, 10, 90, false, true);
             return;
@@ -69,6 +70,7 @@ public class Brick : MonoBehaviour, IDamageable
 
         if (_currentHealth <= 0)
         {
+            SoundManager.Instance.PlayOneShot(SoundType.BrickDestroyed);
             _isDestroyed = true;
 
             if (GameManager.Instance != null)
@@ -101,6 +103,7 @@ public class Brick : MonoBehaviour, IDamageable
         }
         else
         {
+            SoundManager.Instance.PlayOneShot(SoundType.BrickHit);
             // Если кирпич ранен, но не убит - тоже трясем
             transform.DOShakeScale(0.15f, 0.2f);
         }

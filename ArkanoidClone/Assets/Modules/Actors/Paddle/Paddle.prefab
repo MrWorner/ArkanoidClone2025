@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 130078241519549495}
   - component: {fileID: 6109603886019377999}
   - component: {fileID: 8384681939853065830}
-  - component: {fileID: 6652074491594429054}
+  - component: {fileID: 4523323704065497077}
   m_Layer: 0
   m_Name: Paddle
   m_TagString: Paddle
@@ -29,7 +29,7 @@ Transform:
   m_GameObject: {fileID: 4714402755853467585}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 4.7, y: 2.22, z: 0}
-  m_LocalScale: {x: 6, y: 1, z: 1}
+  m_LocalScale: {x: 0.75, y: 0.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4671162643740029153}
@@ -90,12 +90,12 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 1
-  m_Sprite: {fileID: 21300000, guid: cceb47b09b472214689adb6671ce0c80, type: 3}
+  m_Sprite: {fileID: 21300000, guid: b9e62f654a443664f93b8f4a1967c72d, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 0.24, y: 0.24}
+  m_Size: {x: 2.56, y: 2.56}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -122,7 +122,7 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!61 &6652074491594429054
+--- !u!61 &4523323704065497077
 BoxCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -135,18 +135,18 @@ BoxCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0, y: 0}
+  m_Offset: {x: 0, y: 0.006392218}
   m_SpriteTilingProperty:
-    border: {x: 0.06, y: 0.06, z: 0.06, w: 0.06}
+    border: {x: 0, y: 1.0699999, z: 0, w: 1.06}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.24, y: 0.24}
-    newSize: {x: 0.24, y: 0.24}
+    oldSize: {x: 2.56, y: 2.56}
+    newSize: {x: 2.56, y: 2.56}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 0.24, y: 0.24}
+  m_Size: {x: 2.56, y: 0.42498493}
   m_EdgeRadius: 0
 --- !u!1 &5339557895467423060
 GameObject:

@@ -152,6 +152,7 @@ public class BallController : MonoBehaviour
     {
         if (isLaunched && collision.gameObject.CompareTag("Paddle"))
         {
+            SoundManager.Instance.PlayOneShot(SoundType.PaddleHit);
             if (Time.time - _launchTime < 0.2f) return;
             CalculateRebound(collision);
             return;

@@ -64,6 +64,7 @@ public class PowerUp : MonoBehaviour
 
     private void ApplyBonus()
     {
+        SoundManager.Instance.PlayOneShot(SoundType.PowerUpPickup);
         GameManager.Instance.AddScore(bonusPoints);
         GameManager.Instance.ActivateTripleBall();
     }

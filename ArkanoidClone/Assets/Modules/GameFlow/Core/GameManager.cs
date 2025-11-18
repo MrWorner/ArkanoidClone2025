@@ -113,6 +113,7 @@ public class GameManager : MonoBehaviour
 
     public void HandleBallLost(BallController ball)
     {
+        SoundManager.Instance.PlayOneShot(SoundType.BallLost);
         ballPool.ReturnBall(ball);
         int remainingBalls = ballPool.GetActiveBalls().Count;
         if (remainingBalls <= 0) LoseLife();
@@ -152,6 +153,7 @@ public class GameManager : MonoBehaviour
     {
         if (ignoreBottomWall) { RespawnMainBall(); return; }
 
+        SoundManager.Instance.PlayOneShot(SoundType.LifeLost);
         CurrentLives--;
         if (uiManager != null) uiManager.UpdateLives(CurrentLives);
 
