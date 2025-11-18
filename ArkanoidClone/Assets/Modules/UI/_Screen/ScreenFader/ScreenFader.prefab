@@ -45,13 +45,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52be65b320dfe924092695b130b07a1e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ScreenFader
-  _loadingCanvasGroup: {fileID: 8306822387576232047}
-  _hourglassIconTransform: {fileID: 124939531190305032}
-  _loadingText: {fileID: 8068160378542700017}
-  _fadeDuration: 0.5
-  _rotationDuration: 0.5
-  _rotationPause: 0.1
-  _coloredDebug: 0
+  loadingCanvasGroup: {fileID: 8306822387576232047}
+  hourglassIconTransform: {fileID: 124939531190305032}
+  loadingText: {fileID: 8068160378542700017}
+  fadeDuration: 0.5
+  rotationDuration: 0.5
+  rotationPause: 0.1
 --- !u!1 &1665878295126110194
 GameObject:
   m_ObjectHideFlags: 0

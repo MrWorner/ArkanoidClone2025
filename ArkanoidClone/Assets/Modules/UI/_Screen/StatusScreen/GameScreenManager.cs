@@ -1,57 +1,73 @@
-﻿// GameScreenManager.cs (Переименованный UIManager)
-
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
+using NaughtyAttributes;
 
-/// <summary>
-/// Управляет активацией/скрытием больших экранов состояния игры (Game Over, Victory, Level Transition).
-/// </summary>
-public class GameScreenManager : MonoBehaviour
+namespace MiniIT.UI
 {
-    // Оставлены только ссылки на игровые экраны
-    [Header("Views")]
-    [SerializeField] private GameObject gameOverScreen;
-    [SerializeField] private GameObject victoryScreen;
-    [SerializeField] private GameObject levelTransitionScreen;
-    [SerializeField] private TextMeshProUGUI levelTransitionText;
-
-    // --- Методы для экранов ---
-
-    public void ShowGameOver(bool show)
+    /// <summary>
+    /// Manages activation/deactivation of major game state screens (Game Over, Victory, Level Transition).
+    /// </summary>
+    public class GameScreenManager : MonoBehaviour
     {
-        if (gameOverScreen != null)
+        // ========================================================================
+        // --- SERIALIZED FIELDS ---
+        // ========================================================================
+
+        [BoxGroup("VIEWS")]
+        [SerializeField, Required]
+        private GameObject gameOverScreen = null;
+
+        [BoxGroup("VIEWS")]
+        [SerializeField, Required]
+        private GameObject victoryScreen = null;
+
+        [BoxGroup("VIEWS")]
+        [SerializeField, Required]
+        private GameObject levelTransitionScreen = null;
+
+        [BoxGroup("VIEWS")]
+        [SerializeField, Required]
+        private TextMeshProUGUI levelTransitionText = null;
+
+        // ========================================================================
+        // --- PUBLIC METHODS ---
+        // ========================================================================
+
+        public void ShowGameOver(bool show)
         {
-            gameOverScreen.SetActive(show);
+            if (gameOverScreen != null)
+            {
+                gameOverScreen.SetActive(show);
+            }
+        }
+
+        public void ShowVictory(bool show)
+        {
+            if (victoryScreen != null)
+            {
+                victoryScreen.SetActive(show);
+            }
+        }
+
+        public void ShowLevelTransition(string text)
+        {
+            if (levelTransitionText != null)
+            {
+                levelTransitionText.text = text;
+            }
+
+            if (levelTransitionScreen != null)
+            {
+                levelTransitionScreen.SetActive(true);
+            }
+        }
+
+        public void HideLevelTransition()
+        {
+            if (levelTransitionScreen != null)
+            {
+                levelTransitionScreen.SetActive(false);
+            }
         }
     }
-
-    public void ShowVictory(bool show)
-    {
-        if (victoryScreen != null)
-        {
-            victoryScreen.SetActive(show);
-        }
-    }
-
-    public void ShowLevelTransition(string text)
-    {
-        if (levelTransitionText != null)
-        {
-            levelTransitionText.text = text;
-        }
-        if (levelTransitionScreen != null)
-        {
-            levelTransitionScreen.SetActive(true);
-        }
-    }
-
-    public void HideLevelTransition()
-    {
-        if (levelTransitionScreen != null)
-        {
-            levelTransitionScreen.SetActive(false);
-        }
-    }
-
-    // NOTE: Методы UpdateScore, UpdateLives, UpdateLevel удалены!
 }

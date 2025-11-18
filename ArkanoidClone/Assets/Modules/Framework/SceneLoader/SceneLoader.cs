@@ -3,6 +3,7 @@ using UnityEngine.SceneManagement;
 using System.Collections;
 using NaughtyAttributes;
 using MiniIT.AUDIO;
+using MiniIT.UI;
 
 namespace MiniIT.SCENELOADER
 {
