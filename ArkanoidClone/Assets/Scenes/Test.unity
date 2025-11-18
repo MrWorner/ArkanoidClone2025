@@ -223,7 +223,7 @@ GameObject:
   - component: {fileID: 183251271}
   - component: {fileID: 183251270}
   m_Layer: 5
-  m_Name: Button -Back
+  m_Name: Button - MainMenuLevel BackButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2187,7 +2187,7 @@ MonoBehaviour:
     Selectable: {fileID: 183251275}
   Id:
     Category: MainMenuLevel
-    Name: Back
+    Name: BackButton
     Custom: 0
 --- !u!225 &183251276
 CanvasGroup:

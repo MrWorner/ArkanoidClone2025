@@ -15,7 +15,7 @@ MonoBehaviour:
   Database:
     Items:
     - Category: MainMenuLevel
-      Name: Back
+      Name: BackButton
     - Category: MainMenuLevel
       Name: NewGame
     - Category: None
