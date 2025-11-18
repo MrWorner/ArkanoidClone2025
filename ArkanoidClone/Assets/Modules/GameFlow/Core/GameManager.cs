@@ -1,17 +1,20 @@
 ﻿using MiniIT.LEVELS;
 using NaughtyAttributes;
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace miniit.CORE
+namespace MiniIT.CORE
 {
     /// <summary>
     /// Manages the main game loop, score, lives, and level progression.
     /// </summary>
     public class GameManager : MonoBehaviour
     {
+        // ========================================================================
+        // --- PROPERTIES ---
+        // ========================================================================
+
         /// <summary>
         /// Global singleton instance.
         /// </summary>
@@ -20,21 +23,6 @@ namespace miniit.CORE
             get;
             private set;
         }
-
-        [Header("Game Settings")]
-        [SerializeField] private int startLives = 3;
-        [SerializeField] private bool ignoreBottomWall = false;
-
-        [Header("References")]
-        [SerializeField, Required] private BallPool ballPool = null;
-        [SerializeField, Required] private LevelManager levelManager = null;
-        [SerializeField, Required] private GameHUDView hudView = null;
-        [SerializeField, Required] private GameScreenManager screenManager = null;
-        [SerializeField, Required] private PowerUpPool powerUpPool = null;
-
-        [Header("Bonuses")]
-        [SerializeField] private int startBricksForPowerUp = 10;
-        [SerializeField] private int powerUpStepIncrement = 5;
 
         /// <summary>
         /// Current number of player lives.
@@ -54,70 +42,61 @@ namespace miniit.CORE
             private set;
         }
 
-        // Internal game state
+        // ========================================================================
+        // --- SERIALIZED FIELDS ---
+        // ========================================================================
+
+        [BoxGroup("SETTINGS")]
+        [Header("Game Settings")]
+        [SerializeField]
+        private int startLives = 3;
+
+        [BoxGroup("SETTINGS")]
+        [SerializeField]
+        private bool ignoreBottomWall = false;
+
+        [BoxGroup("REFERENCES")]
+        [Header("References")]
+        [SerializeField, Required]
+        private BallPool ballPool = null;
+
+        [BoxGroup("REFERENCES")]
+        [SerializeField, Required]
+        private LevelManager levelManager = null;
+
+        [BoxGroup("REFERENCES")]
+        [SerializeField, Required]
+        private GameHUDView hudView = null;
+
+        [BoxGroup("REFERENCES")]
+        [SerializeField, Required]
+        private GameScreenManager screenManager = null;
+
+        [BoxGroup("REFERENCES")]
+        [SerializeField, Required]
+        private PowerUpPool powerUpPool = null;
+
+        [BoxGroup("BONUSES")]
+        [Header("Bonuses")]
+        [SerializeField]
+        private int startBricksForPowerUp = 10;
+
+        [BoxGroup("BONUSES")]
+        [SerializeField]
+        private int powerUpStepIncrement = 5;
+
+        // ========================================================================
+        // --- PRIVATE FIELDS ---
+        // ========================================================================
+
         private int currentLevel = 1;
         private int activeBrickCount = 0;
         private int bricksDestroyedCounter = 0;
         private int currentPowerUpThreshold = 0;
 
-        /// <summary>
-        /// Initializes the singleton.
-        /// </summary>
-        private void Awake()
-        {
-            // If an instance already exists, then destroy this duplicate.
-            if (Instance != null && Instance != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
-            Instance = this;
-        }
-
-        private void Start()
-        {
-            // If any essential reference is missing, then log an error and stop execution.
-            if (hudView == null || screenManager == null || levelManager == null || ballPool == null || powerUpPool == null)
-            {
-                Debug.LogError("GameManager: Missing references to core components!");
-                return;
-            }
-
-            Brick.OnAnyBrickDestroyed += HandleBrickDestroyed;
-            PowerUp.OnPowerUpPickedUp += HandlePowerUpPickup;
-
-            StartNewGame();
-        }
-
-        /// <summary>
-        /// Resets game state and loads the initial level.
-        /// </summary>
-        private void StartNewGame()
-        {
-            CurrentLives = startLives;
-            CurrentScore = 0;
-
-            // If a global game instance exists, then retrieve the selected level index.
-            if (GameInstance.Instance != null)
-            {
-                currentLevel = GameInstance.Instance.SelectedLevelIndex;
-            }
-            else
-            {
-                currentLevel = 1;
-            }
-
-            if (hudView != null)
-            {
-                hudView.UpdateLives(CurrentLives);
-                hudView.UpdateScore(CurrentScore);
-                hudView.UpdateLevel(currentLevel);
-            }
-
-            ResetPowerUpLogic();
-            StartCoroutine(LoadLevelRoutine(currentLevel, false));
-        }
+        // ========================================================================
+        // --- PUBLIC METHODS ---
+        // ========================================================================
 
         /// <summary>
         /// Sets the number of active bricks for the current level.
@@ -149,37 +128,6 @@ namespace miniit.CORE
         }
 
         /// <summary>
-        /// Handles the loss of a life or respawns the ball if god mode is active.
-        /// </summary>
-        private void LoseLife()
-        {
-            // If the bottom wall is ignored (god mode), then just respawn the ball.
-            if (ignoreBottomWall)
-            {
-                RespawnMainBall();
-                return;
-            }
-
-            CurrentLives--;
-
-            if (hudView != null)
-            {
-                hudView.UpdateLives(CurrentLives);
-            }
-
-            // If lives have run out, then start the Game Over sequence.
-            if (CurrentLives <= 0)
-            {
-                StartCoroutine(GameOverSequence());
-            }
-            else
-            {
-                SoundManager.Instance.PlayOneShot(SoundType.LifeLost);
-                RespawnMainBall();
-            }
-        }
-
-        /// <summary>
         /// Clones all active balls to create a triple-ball effect.
         /// </summary>
         public void ActivateTripleBall()
@@ -201,7 +149,13 @@ namespace miniit.CORE
                     continue;
                 }
 
-                Vector2 currentVelocity = sourceBall.GetComponent<Rigidbody2D>().velocity;
+                Rigidbody2D rb = sourceBall.GetComponent<Rigidbody2D>();
+                if (rb == null)
+                {
+                    continue;
+                }
+
+                Vector2 currentVelocity = rb.velocity;
                 float speed = currentVelocity.magnitude;
 
                 // If the ball is moving too slowly, then enforce a minimum speed.
@@ -240,6 +194,104 @@ namespace miniit.CORE
             }
         }
 
+        // ========================================================================
+        // --- PRIVATE METHODS ---
+        // ========================================================================
+
+        private void Awake()
+        {
+            // If an instance already exists, then destroy this duplicate.
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            Instance = this;
+        }
+
+        private void Start()
+        {
+            // If any essential reference is missing, then log an error and stop execution.
+            if (hudView == null || screenManager == null || levelManager == null || ballPool == null || powerUpPool == null)
+            {
+                Debug.LogError("GameManager: Missing references to core components!");
+                return;
+            }
+
+            Brick.OnAnyBrickDestroyed += HandleBrickDestroyed;
+            PowerUp.OnPowerUpPickedUp += HandlePowerUpPickup;
+
+            StartNewGame();
+        }
+
+        private void OnDestroy()
+        {
+            Brick.OnAnyBrickDestroyed -= HandleBrickDestroyed;
+            PowerUp.OnPowerUpPickedUp -= HandlePowerUpPickup;
+            Time.timeScale = 1f;
+        }
+
+        /// <summary>
+        /// Resets game state and loads the initial level.
+        /// </summary>
+        private void StartNewGame()
+        {
+            CurrentLives = startLives;
+            CurrentScore = 0;
+
+            // If a global game instance exists, then retrieve the selected level index.
+            if (GameInstance.Instance != null)
+            {
+                currentLevel = GameInstance.Instance.SelectedLevelIndex;
+            }
+            else
+            {
+                currentLevel = 1;
+            }
+
+            if (hudView != null)
+            {
+                hudView.UpdateLives(CurrentLives);
+                hudView.UpdateScore(CurrentScore);
+                hudView.UpdateLevel(currentLevel);
+            }
+
+            ResetPowerUpLogic();
+            StartCoroutine(LoadLevelRoutine(currentLevel, false));
+        }
+
+        /// <summary>
+        /// Handles the loss of a life or respawns the ball if god mode is active.
+        /// </summary>
+        private void LoseLife()
+        {
+            // If the bottom wall is ignored (god mode), then just respawn the ball.
+            if (ignoreBottomWall)
+            {
+                RespawnMainBall();
+                return;
+            }
+
+            CurrentLives--;
+
+            if (hudView != null)
+            {
+                hudView.UpdateLives(CurrentLives);
+            }
+
+            // If lives have run out, then start the Game Over sequence.
+            if (CurrentLives <= 0)
+            {
+                StartCoroutine(GameOverSequence());
+            }
+            else
+            {
+                SoundManager.Instance.PlayOneShot(SoundType.LifeLost);
+                RespawnMainBall();
+            }
+        }
+
         /// <summary>
         /// Callback triggered when a brick is destroyed.
         /// </summary>
@@ -247,7 +299,6 @@ namespace miniit.CORE
         private void HandleBrickDestroyed(Vector3 brickPos)
         {
             activeBrickCount--;
-            Debug.Log($"Bricks remaining: {activeBrickCount}");
 
             // If all bricks are destroyed, then proceed to the victory sequence.
             if (activeBrickCount <= 0)
@@ -388,13 +439,6 @@ namespace miniit.CORE
             SoundManager.Instance.PlayOneShot(SoundType.PowerUpPickup);
             AddScore(bonusPoints);
             ActivateTripleBall();
-        }
-
-        private void OnDestroy()
-        {
-            Brick.OnAnyBrickDestroyed -= HandleBrickDestroyed;
-            PowerUp.OnPowerUpPickedUp -= HandlePowerUpPickup;
-            Time.timeScale = 1f;
         }
     }
 }

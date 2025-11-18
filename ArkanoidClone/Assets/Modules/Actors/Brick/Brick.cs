@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System;
 using DG.Tweening;
-using miniit.CORE;
+using MiniIT.CORE;
 
 public class Brick : MonoBehaviour, IDamageable
 {

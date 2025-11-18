@@ -1,9 +1,8 @@
 ﻿using UnityEngine;
 using System.Linq;
+using System.Collections.Generic;
 using NaughtyAttributes;
-using static BrickChunkSO;
-using miniit.CORE;
-
+using MiniIT.CORE;
 
 
 #if UNITY_EDITOR
@@ -12,9 +11,15 @@ using UnityEditor;
 
 namespace MiniIT.LEVELS
 {
+    /// <summary>
+    /// Manages level generation, chunk selection, and grid population.
+    /// </summary>
     public class LevelManager : MonoBehaviour
     {
-        // 1. Constants & Enums
+        // ========================================================================
+        // --- CONSTANTS & ENUMS ---
+        // ========================================================================
+
         private const int COLS = 12;
         private const int ROWS = 12;
 
@@ -34,11 +39,13 @@ namespace MiniIT.LEVELS
             CenterOut
         }
 
-        // 2. Serialized Fields
+        // ========================================================================
+        // --- SERIALIZED FIELDS ---
+        // ========================================================================
+
         [BoxGroup("DEPENDENCIES")]
-        [Required]
-        [SerializeField]
-        public BrickPool brickPool = null;
+        [SerializeField, Required]
+        private BrickPool brickPool = null;
 
         [BoxGroup("GRID SETTINGS")]
         [SerializeField]
@@ -50,11 +57,11 @@ namespace MiniIT.LEVELS
 
         [BoxGroup("PHASE 1: GEOMETRY")]
         [SerializeField]
-        public string geometryPath = "Assets/Modules/Data/Chunks/Geometry";
+        private string geometryPath = "Assets/Modules/Data/Chunks/Geometry";
 
         [BoxGroup("PHASE 1: GEOMETRY")]
         [SerializeField]
-        private System.Collections.Generic.List<BrickChunkSO> geometryChunks = null;
+        private List<BrickChunkSO> geometryChunks = null;
 
         [BoxGroup("PHASE 1: GEOMETRY")]
         [Range(1, 4)]
@@ -66,11 +73,11 @@ namespace MiniIT.LEVELS
         private SymmetryType symmetryMode = SymmetryType.MirrorHorizontal;
 
         [BoxGroup("PHASE 1: GEOMETRY")]
-        [SerializeField]
+        [SerializeField, Required]
         private BrickTypeSO defaultBrickType = null;
 
         [BoxGroup("PHASE 2: PAINTING")]
-        [SerializeField]
+        [SerializeField, Required]
         private BrickPaletteSO palette = null;
 
         [BoxGroup("PHASE 2: PAINTING")]
@@ -88,55 +95,44 @@ namespace MiniIT.LEVELS
 
         [BoxGroup("PHASE 3: OBSTACLES")]
         [SerializeField]
-        public string obstaclesPath = "Assets/Modules/Data/Chunks/Obstacles";
+        private string obstaclesPath = "Assets/Modules/Data/Chunks/Obstacles";
 
         [BoxGroup("PHASE 3: OBSTACLES")]
         [SerializeField]
-        private System.Collections.Generic.List<BrickChunkSO> obstacleChunks = null;
+        private List<BrickChunkSO> obstacleChunks = null;
 
         [BoxGroup("PHASE 3: OBSTACLES")]
-        [SerializeField]
+        [SerializeField, Required]
         private BrickTypeSO indestructibleType = null;
 
-        // 3. Non-Serialized Privates
+        // ========================================================================
+        // --- NON-SERIALIZED FIELDS ---
+        // ========================================================================
+
         private System.Random prng = null;
         private Brick[,] spawnedGrid = new Brick[COLS, ROWS];
 
-        // 4. Properties
+        // ========================================================================
+        // --- PROPERTIES ---
+        // ========================================================================
+
         public static LevelManager Instance
         {
             get;
             private set;
         }
 
-        // 5. Unity Methods
-        private void Awake()
-        {
-            if (Instance == null)
-            {
-                Instance = this;
-            }
-            else if (Instance != this)
-            {
-                Destroy(gameObject);
-            }
+        // ========================================================================
+        // --- PUBLIC METHODS ---
+        // ========================================================================
 
-            // Sorting is critical for determinism
-            if (geometryChunks != null)
-            {
-                geometryChunks.Sort((a, b) => a.name.CompareTo(b.name));
-            }
-
-            if (obstacleChunks != null)
-            {
-                obstacleChunks.Sort((a, b) => a.name.CompareTo(b.name));
-            }
-        }
-
-        // 6. Public Methods
+        /// <summary>
+        /// Generates a level based on a specific seed for deterministic results.
+        /// </summary>
+        /// <param name="seed">The random seed.</param>
         public void GenerateLevelBySeed(int seed)
         {
-            // LOG 1: Input data check
+            // Input data check for debug purposes
             int gCount = geometryChunks != null ? geometryChunks.Count : 0;
             int oCount = obstacleChunks != null ? obstacleChunks.Count : 0;
 
@@ -145,6 +141,9 @@ namespace MiniIT.LEVELS
             BuildChaosLevel();
         }
 
+        /// <summary>
+        /// Toggles the visibility of the entire grid.
+        /// </summary>
         public void SetLevelVisibility(bool isVisible)
         {
             foreach (Brick brick in spawnedGrid)
@@ -156,6 +155,9 @@ namespace MiniIT.LEVELS
             }
         }
 
+        /// <summary>
+        /// Editor/Debug button to force build a Chaos level.
+        /// </summary>
         [Button("Build Chaos Level")]
         public void BuildChaosLevel()
         {
@@ -163,6 +165,9 @@ namespace MiniIT.LEVELS
             BuildLevel();
         }
 
+        /// <summary>
+        /// Main method to construct the level geometry, paint it, and add obstacles.
+        /// </summary>
         [Button("Build Level")]
         public void BuildLevel()
         {
@@ -178,7 +183,6 @@ namespace MiniIT.LEVELS
                 System.Array paintValues = System.Enum.GetValues(typeof(PaintPattern));
                 paintPattern = (PaintPattern)paintValues.GetValue(GetPRNG().Next(0, paintValues.Length));
 
-                // LOG 2: Selected pattern
                 GenerateChaosGeometry();
             }
             else
@@ -194,10 +198,38 @@ namespace MiniIT.LEVELS
             }
 
             ReportToGameManager();
-            // LOG: Finish
         }
 
-        // 7. Private Methods
+        // ========================================================================
+        // --- PRIVATE METHODS & UNITY CALLBACKS ---
+        // ========================================================================
+
+        private void Awake()
+        {
+            if (Instance == null)
+            {
+                Instance = this;
+            }
+            else if (Instance != this)
+            {
+                Destroy(gameObject);
+            }
+
+            // Sorting is critical for determinism across different platforms/sessions
+            if (geometryChunks != null)
+            {
+                geometryChunks.Sort((a, b) => a.name.CompareTo(b.name));
+            }
+
+            if (obstacleChunks != null)
+            {
+                obstacleChunks.Sort((a, b) => a.name.CompareTo(b.name));
+            }
+        }
+
+        /// <summary>
+        /// Lazy initialization of the Pseudo-Random Number Generator.
+        /// </summary>
         private System.Random GetPRNG()
         {
             if (prng == null)
@@ -206,6 +238,7 @@ namespace MiniIT.LEVELS
                 prng = new System.Random(seed);
                 Debug.LogWarning($"[LevelManager] prng auto-init with seed: {seed}");
             }
+
             return prng;
         }
 
@@ -221,18 +254,20 @@ namespace MiniIT.LEVELS
 
         // --- GENERATION LOGIC ---
 
-        private System.Collections.Generic.List<BrickChunkSO> GetDistributedTemplates(System.Collections.Generic.List<BrickChunkSO> sourceList, int count)
+        /// <summary>
+        /// Selects a subset of templates and distributes them for quadrant generation.
+        /// </summary>
+        private List<BrickChunkSO> GetDistributedTemplates(List<BrickChunkSO> sourceList, int count)
         {
             int safeCount = Mathf.Min(count, sourceList.Count);
 
             // Logging the selection process to see the random "shift"
-            // Using GetPRNG()
-            System.Collections.Generic.List<BrickChunkSO> uniqueSelection = sourceList.OrderBy(x => GetPRNG().Next()).Take(safeCount).ToList();
+            List<BrickChunkSO> uniqueSelection = sourceList.OrderBy(x => GetPRNG().Next()).Take(safeCount).ToList();
 
-            // LOG 3: Selected templates from pool
+            // Log selected templates from pool for debugging if needed
             string selectedNames = string.Join(", ", uniqueSelection.Select(c => c.name));
 
-            System.Collections.Generic.List<BrickChunkSO> finalDistribution = new System.Collections.Generic.List<BrickChunkSO>();
+            List<BrickChunkSO> finalDistribution = new List<BrickChunkSO>();
 
             for (int i = 0; i < 4; i++)
             {
@@ -249,14 +284,14 @@ namespace MiniIT.LEVELS
                 return;
             }
 
-            System.Collections.Generic.List<BrickChunkSO> templates = GetDistributedTemplates(geometryChunks, geometryTemplateCount);
+            List<BrickChunkSO> templates = GetDistributedTemplates(geometryChunks, geometryTemplateCount);
 
             Vector2 currentCenter = transform.position;
             float totalW = COLS * brickWidth;
             float totalH = ROWS * brickHeight;
             Vector2 startPos = new Vector2(currentCenter.x - (totalW / 2f), currentCenter.y + (totalH / 2f));
 
-            System.Collections.Generic.List<Vector2Int> quadrants = new System.Collections.Generic.List<Vector2Int>
+            List<Vector2Int> quadrants = new List<Vector2Int>
             {
                 new Vector2Int(0, 0),
                 new Vector2Int(6, 0),
@@ -272,7 +307,6 @@ namespace MiniIT.LEVELS
                 bool flipX = GetPRNG().NextDouble() > 0.5;
                 bool flipY = GetPRNG().NextDouble() > 0.5;
 
-                // LOG 4: Detailed info for each quadrant
                 SpawnQuadrant(chunk, offset.x, offset.y, flipX, flipY, startPos);
             }
         }
@@ -284,14 +318,14 @@ namespace MiniIT.LEVELS
                 return;
             }
 
-            System.Collections.Generic.List<BrickChunkSO> templates = GetDistributedTemplates(obstacleChunks, obstacleTemplateCount);
+            List<BrickChunkSO> templates = GetDistributedTemplates(obstacleChunks, obstacleTemplateCount);
 
             Vector2 currentCenter = transform.position;
             float totalW = COLS * brickWidth;
             float totalH = ROWS * brickHeight;
             Vector2 startPos = new Vector2(currentCenter.x - (totalW / 2f), currentCenter.y + (totalH / 2f));
 
-            System.Collections.Generic.List<Vector2Int> quadrants = new System.Collections.Generic.List<Vector2Int>
+            List<Vector2Int> quadrants = new List<Vector2Int>
             {
                 new Vector2Int(0, 0),
                 new Vector2Int(6, 0),
@@ -357,18 +391,21 @@ namespace MiniIT.LEVELS
                     tmpl[2] = B; fx[2] = false; fy[2] = false;
                     tmpl[3] = B; fx[3] = true; fy[3] = false;
                     break;
+
                 case SymmetryType.MirrorVertical:
                     tmpl[0] = A; fx[0] = false; fy[0] = false;
                     tmpl[1] = B; fx[1] = false; fy[1] = false;
                     tmpl[2] = A; fx[2] = false; fy[2] = true;
                     tmpl[3] = B; fx[3] = false; fy[3] = true;
                     break;
+
                 case SymmetryType.MirrorBoth:
                     tmpl[0] = A; fx[0] = false; fy[0] = false;
                     tmpl[1] = A; fx[1] = true; fy[1] = false;
                     tmpl[2] = A; fx[2] = false; fy[2] = true;
                     tmpl[3] = A; fx[3] = true; fy[3] = true;
                     break;
+
                 case SymmetryType.Chaos:
                     break;
             }
@@ -381,7 +418,7 @@ namespace MiniIT.LEVELS
                 return;
             }
 
-            foreach (BrickData data in chunk.bricks)
+            foreach (BrickChunkSO.BrickData data in chunk.bricks)
             {
                 int cx = data.position.x;
                 int cy = data.position.y;
@@ -416,7 +453,7 @@ namespace MiniIT.LEVELS
 
         private void ApplyObstacleQuadrant(BrickChunkSO chunk, int offsetX, int offsetY, bool flipX, bool flipY, Vector2 startPos)
         {
-            foreach (BrickData data in chunk.bricks)
+            foreach (BrickChunkSO.BrickData data in chunk.bricks)
             {
                 int cx = data.position.x;
                 int cy = data.position.y;
@@ -476,17 +513,21 @@ namespace MiniIT.LEVELS
                     }
 
                     float t = 0f;
+
                     switch (paintPattern)
                     {
                         case PaintPattern.BottomToTop:
                             t = (float)(ROWS - 1 - y) / (ROWS - 1);
                             break;
+
                         case PaintPattern.LeftToRight:
                             t = (float)x / (COLS - 1);
                             break;
+
                         case PaintPattern.ZebraHorizontal:
                             t = (y % 2 == 0) ? 0f : 1f;
                             break;
+
                         case PaintPattern.CenterOut:
                             float dist = Vector2.Distance(new Vector2(x, y), new Vector2(COLS / 2f, ROWS / 2f));
                             float maxDist = Vector2.Distance(Vector2.zero, new Vector2(COLS / 2f, ROWS / 2f));
@@ -513,6 +554,7 @@ namespace MiniIT.LEVELS
             }
 
             int destroyableCount = 0;
+
             foreach (Brick brick in spawnedGrid)
             {
                 if (brick != null && !brick.BrickType.isIndestructible)
@@ -545,13 +587,14 @@ namespace MiniIT.LEVELS
                 Debug.LogError("Missing references!");
                 return false;
             }
+
             return true;
         }
 
 #if UNITY_EDITOR
-        private System.Collections.Generic.List<T> LoadAssets<T>(string folderPath) where T : Object
+        private List<T> LoadAssets<T>(string folderPath) where T : Object
         {
-            System.Collections.Generic.List<T> assets = new System.Collections.Generic.List<T>();
+            List<T> assets = new List<T>();
             string[] guids = AssetDatabase.FindAssets($"t:{typeof(T).Name}", new[] { folderPath });
 
             foreach (string guid in guids)
@@ -564,6 +607,7 @@ namespace MiniIT.LEVELS
                     assets.Add(asset);
                 }
             }
+
             return assets;
         }
 #endif
