@@ -5,7 +5,6 @@ using UnityEngine.SceneManagement;
 
 public enum GameScene
 {
-    LoadBoost,
     MainMenu,
     GameScene
 }
@@ -99,8 +98,6 @@ public class SceneLoader : MonoBehaviour
     {
         switch (scene)
         {
-            case GameScene.LoadBoost:
-                return "00_LoadBoost";
             case GameScene.MainMenu:
                 return "01_MainMenu";
             case GameScene.GameScene:

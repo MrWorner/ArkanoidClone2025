@@ -73,7 +73,6 @@ public class LevelSelectPresenter : MonoBehaviour, IPresenter
 
     private void OnStartClicked()
     {
-        // Загрузка сцены игры...
         SceneLoader.Instance.LoadNextScene(GameScene.GameScene);
     }
 

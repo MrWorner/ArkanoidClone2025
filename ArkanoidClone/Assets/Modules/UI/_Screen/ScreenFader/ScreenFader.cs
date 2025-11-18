@@ -9,9 +9,9 @@ public class ScreenFader : MonoBehaviour
     private static ScreenFader _instance;
 
     #region Поля: Required
-    [ BoxGroup("Required"), Required, SerializeField] private CanvasGroup _loadingCanvasGroup;
-    [ BoxGroup("Required"), Required, SerializeField] private Transform _hourglassIconTransform;
-    [ BoxGroup("Required"), Required, SerializeField] private TextMeshProUGUI _loadingText;
+    [BoxGroup("Required"), Required, SerializeField] private CanvasGroup _loadingCanvasGroup;
+    [BoxGroup("Required"), Required, SerializeField] private Transform _hourglassIconTransform;
+    [BoxGroup("Required"), Required, SerializeField] private TextMeshProUGUI _loadingText;
     #endregion
 
     #region Поля
