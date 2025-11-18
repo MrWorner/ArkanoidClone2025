@@ -209,16 +209,26 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator LoadLevelRoutine(int level, bool showTransition)
     {
-        // 1. Показываем черный экран "Level N"
         if (showTransition && uiManager != null)
         {
             uiManager.ShowLevelTransition($"Level {level}");
         }
 
-        // 2. ВОТ ТУТ мы строим новый уровень (старые кирпичи исчезают только сейчас)
-        if (levelManager != null)
+        if (GameInstance.Instance != null)
         {
-            levelManager.BuildChaosLevel();
+            int levelSeed = GameInstance.Instance.CurrentLevelSeed;
+
+            if (levelManager != null)
+            {
+                levelManager.GenerateLevelBySeed(levelSeed);
+            }
+        }
+        else
+        {
+            if (levelManager != null)
+            {
+                levelManager.BuildChaosLevel();
+            }
         }
 
         // Сброс бонусов

@@ -7,7 +7,7 @@ public class GameInstance : MonoBehaviour
 
     [BoxGroup("Settings")]
     [Tooltip("Измените это число, чтобы полностью поменять генерацию всех уровней игры")]
-    public int MasterSeed = 777; 
+    public int MasterSeed = 777;
 
     [BoxGroup("Data"), ReadOnly]
     public int SelectedLevelIndex = 1;
@@ -24,16 +24,17 @@ public class GameInstance : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+
+        // --- ИСПРАВЛЕНИЕ: ---
+        // Принудительно рассчитываем Seed для стартового уровня (Level 1),
+        // иначе он останется 0 до первого нажатия кнопки.
+        SetLevelData(SelectedLevelIndex);
     }
 
     public void SetLevelData(int levelIndex)
     {
         SelectedLevelIndex = Mathf.Clamp(levelIndex, 1, 9999);
 
-        // ФОРМУЛА ГЕНЕРАЦИИ:
-        // Мы берем номер уровня, умножаем на произвольное число (для разброса)
-        // и прибавляем ваш MasterSeed.
-        // unchecked нужен, чтобы при переполнении числа игра не вылетала, а просто шла по кругу
         unchecked
         {
             CurrentLevelSeed = (SelectedLevelIndex * 1234567) + MasterSeed;

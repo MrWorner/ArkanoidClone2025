@@ -22,8 +22,11 @@ public class UIManager : MonoBehaviour
         gameOverScreen.SetActive(false);
         levelTransitionScreen.SetActive(false);
 
-        // Прячем победу при старте
         if (victoryMessage != null) victoryMessage.SetActive(false);
+
+        int levelIndex = GameInstance.Instance.SelectedLevelIndex;
+
+        UpdateLevel(levelIndex);
     }
 
     public void UpdateScore(int score)
