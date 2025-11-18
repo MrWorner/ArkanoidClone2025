@@ -8,7 +8,11 @@ public class BallController : MonoBehaviour
     [SerializeField] private float initialSpeed = 7f;
     [SerializeField] private float minTotalSpeed = 7f;
     [SerializeField] private float launchDelay = 3f;
-    [SerializeField] private float minVerticalVelocity = 0.5f;
+
+    // --- ИСПРАВЛЕНИЕ: Минимальная скорость по обеим осям ---
+    [SerializeField] private float minVerticalVelocity = 0.5f;   // Чтобы не застревал горизонтально
+    [SerializeField] private float minHorizontalVelocity = 0.5f; // Чтобы не застревал вертикально
+    // -------------------------------------------------------
 
     [Header("Бонусы")]
     [SerializeField] private float speedBoostMultiplier = 1.5f;
@@ -21,22 +25,18 @@ public class BallController : MonoBehaviour
     private Coroutine _launchCoroutine;
     private float _launchTime;
 
-    // --- НОВОЕ: Точка привязки ---
-    private Transform _anchorPoint; // Ссылка на BallSpawnPoint внутри ракетки
-    // ----------------------------
+    private Transform _anchorPoint;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
     }
 
-    void Update() // Используем Update для визуального следования
+    void Update()
     {
-        // Если мяч НЕ запущен и у нас есть "якорь" -> следуем за ним
         if (!isLaunched && _anchorPoint != null)
         {
             transform.position = _anchorPoint.position;
-            // Мы НЕ меняем parent, поэтому scale не ломается!
         }
     }
 
@@ -44,7 +44,7 @@ public class BallController : MonoBehaviour
     {
         if (!isLaunched) return;
 
-        // (Логика Хоминга и Анти-застревания осталась прежней)
+        // 1. Логика Хоминга (без изменений)
         if (_homingTarget != null)
         {
             Vector2 currentVelocity = rb.velocity;
@@ -53,18 +53,39 @@ public class BallController : MonoBehaviour
             rb.velocity = newDirection * _currentSpeed;
         }
 
+        // --- ИСПРАВЛЕНИЕ ЗАСТРЕВАНИЙ ---
         Vector2 velocity = rb.velocity;
+        bool velocityChanged = false;
+
+        // Проблема 1: Мяч летает чисто горизонтально (Y слишком мал)
         if (Mathf.Abs(velocity.y) < minVerticalVelocity)
         {
-            velocity.y = (velocity.y >= 0) ? minVerticalVelocity : -minVerticalVelocity;
-            rb.velocity = velocity.normalized * velocity.magnitude;
-            velocity = rb.velocity;
+            // Если скорость 0, выбираем случайное направление, иначе сохраняем текущее
+            float sign = (velocity.y == 0) ? (Random.value > 0.5f ? 1f : -1f) : Mathf.Sign(velocity.y);
+            velocity.y = sign * minVerticalVelocity;
+            velocityChanged = true;
         }
 
-        float currentMagnitude = velocity.magnitude;
-        if (currentMagnitude < minTotalSpeed)
+        // Проблема 2: Мяч летает чисто вертикально (X слишком мал)
+        if (Mathf.Abs(velocity.x) < minHorizontalVelocity)
         {
-            rb.velocity = velocity.normalized * minTotalSpeed;
+            // Если скорость 0, выбираем случайное направление
+            float sign = (velocity.x == 0) ? (Random.value > 0.5f ? 1f : -1f) : Mathf.Sign(velocity.x);
+            velocity.x = sign * minHorizontalVelocity;
+            velocityChanged = true;
+        }
+
+        // Применяем изменения и нормализуем скорость
+        if (velocityChanged)
+        {
+            rb.velocity = velocity.normalized * _currentSpeed;
+        }
+        // -------------------------------
+
+        // Контроль общей скорости (чтобы не замедлялся)
+        if (rb.velocity.magnitude < minTotalSpeed)
+        {
+            rb.velocity = rb.velocity.normalized * minTotalSpeed;
         }
     }
 
@@ -77,29 +98,17 @@ public class BallController : MonoBehaviour
         rb.bodyType = RigidbodyType2D.Kinematic;
         rb.velocity = Vector2.zero;
 
-        // --- НОВАЯ ЛОГИКА ПОИСКА ТОЧКИ ---
         if (_anchorPoint == null)
         {
             GameObject paddle = GameObject.FindGameObjectWithTag("Paddle");
             if (paddle != null)
             {
-                // Ищем дочерний объект с именем "BallSpawnPoint"
                 Transform spawnPoint = paddle.transform.Find("BallSpawnPoint");
-                if (spawnPoint != null)
-                {
-                    _anchorPoint = spawnPoint;
-                }
-                else
-                {
-                    // Если забыли создать точку, используем центр ракетки + отступ
-                    _anchorPoint = paddle.transform;
-                    Debug.LogWarning("BallController: BallSpawnPoint не найден в Paddle! Использую центр.");
-                }
+                if (spawnPoint != null) _anchorPoint = spawnPoint;
+                else _anchorPoint = paddle.transform;
             }
         }
-        // ----------------------------------
 
-        // Сразу ставим на позицию
         if (_anchorPoint != null)
         {
             transform.position = _anchorPoint.position;
@@ -111,7 +120,7 @@ public class BallController : MonoBehaviour
 
     public void SpawnAsClone(Vector2 position, Vector2 velocity)
     {
-        _anchorPoint = null; // Клоны не привязаны
+        _anchorPoint = null;
         transform.position = position;
 
         isLaunched = true;
@@ -125,8 +134,6 @@ public class BallController : MonoBehaviour
         rb.velocity = velocity.normalized * _currentSpeed;
     }
 
-    // (Методы LaunchDelayCoroutine, LaunchMainBall, OnCollisionEnter2D... без изменений)
-
     private IEnumerator LaunchDelayCoroutine()
     {
         yield return new WaitForSeconds(launchDelay);
@@ -138,7 +145,7 @@ public class BallController : MonoBehaviour
         if (isLaunched) return;
 
         isLaunched = true;
-        _anchorPoint = null; // Перестаем следовать
+        _anchorPoint = null;
 
         rb.bodyType = RigidbodyType2D.Dynamic;
         _launchTime = Time.time;
@@ -150,6 +157,7 @@ public class BallController : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
+        // Если ударились о ракетку - рассчитываем отскок
         if (isLaunched && collision.gameObject.CompareTag("Paddle"))
         {
             SoundManager.Instance.PlayOneShot(SoundType.PaddleHit);
@@ -158,6 +166,19 @@ public class BallController : MonoBehaviour
             return;
         }
 
+        // --- ИСПРАВЛЕНИЕ: ЛОМАЕМ ИДЕАЛЬНЫЕ ЦИКЛЫ ---
+        // Если ударились обо что угодно КРОМЕ ракетки (стена, кирпич)
+        else
+        {
+            // Добавляем микроскопическое отклонение, чтобы разбить "бесконечный цикл" отскоков
+            Vector2 randomTweak = new Vector2(Random.Range(-0.1f, 0.1f), Random.Range(-0.1f, 0.1f));
+            rb.velocity += randomTweak;
+
+            // Восстанавливаем скорость (так как tweak мог ее изменить)
+            rb.velocity = rb.velocity.normalized * _currentSpeed;
+        }
+        // -------------------------------------------
+
         if (collision.gameObject.CompareTag("Wall"))
         {
             SoundManager.Instance.PlayOneShot(SoundType.WallHit);
@@ -165,12 +186,12 @@ public class BallController : MonoBehaviour
 
         if (collision.gameObject.TryGetComponent(out IDamageable damageable))
         {
-            SoundManager.Instance.PlayOneShot(SoundType.WallHit);
+            // Звук перенесен в сам кирпич или оставлен тут - на ваше усмотрение, 
+            // но лучше не дублировать.
+            // SoundManager.Instance.PlayOneShot(SoundType.WallHit); 
             damageable.TakeDamage(1);
             return;
         }
-
-        
     }
 
     private void CalculateRebound(Collision2D collision)
