@@ -1,4 +1,4 @@
-﻿using Sirenix.OdinInspector;
+﻿using NaughtyAttributes;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,9 +8,9 @@ using UnityEngine;
 
 public class DebugMessageSystemUI : MonoBehaviour
 {
-    [BoxGroup("Required"), Required(InfoMessageType.Error), SerializeField]
+    [BoxGroup("Required"), SerializeField]
     private GameObject _messageTextPrefab;
-    [BoxGroup("Required"), Required(InfoMessageType.Error), SerializeField]
+    [BoxGroup("Required"), SerializeField]
     private RectTransform _messagesPanel;
 
     [SerializeField] private int _maxMessages = 5;

@@ -2,8 +2,8 @@
 // ОСНОВНЫЕ ЗАВИСИСИМОСТИ: Sirenix.OdinInspector, UnityEditor, System.Reflection.
 // ПРИМЕЧАНИЕ: Этот скрипт предназначен для работы исключительно в редакторе Unity.
 using UnityEngine;
-using Sirenix.OdinInspector;
 using System.Reflection;
+using NaughtyAttributes;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -17,15 +17,13 @@ public class ColoredDebugToggler : MonoBehaviour
     #endregion Поля
 
     #region Публичные методы
-    [Button("Включить ВСЕ ColoredDebug логи", ButtonSizes.Large), GUIColor(0.4f, 0.8f, 0.4f)]
-    [BoxGroup("ACTIONS", ShowLabel = false)]
+    [Button]
     public void EnableAllLogs()
     {
         ToggleAllLogs(true);
     }
 
-    [Button("Выключить ВСЕ ColoredDebug логи", ButtonSizes.Large), GUIColor(0.8f, 0.4f, 0.4f)]
-    [BoxGroup("ACTIONS")]
+    [Button]
     public void DisableAllLogs()
     {
         ToggleAllLogs(false);

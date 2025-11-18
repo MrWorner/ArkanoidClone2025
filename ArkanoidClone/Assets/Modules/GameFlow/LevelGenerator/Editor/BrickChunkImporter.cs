@@ -1,48 +1,101 @@
-﻿using UnityEngine;
+﻿#if UNITY_EDITOR
+using UnityEngine;
 using UnityEditor;
 using System.IO;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using Sirenix.OdinInspector;
-using Sirenix.OdinInspector.Editor;
+// Убрали using Sirenix...
 
-public class BrickChunkImporter : OdinEditorWindow
+// Наследуемся от стандартного EditorWindow вместо OdinEditorWindow
+public class BrickChunkImporter : EditorWindow
 {
+    // Поля теперь просто приватные переменные, атрибуты [Required] тут не сработают автоматически
+    private TextAsset sourceFile;
+    private BrickTextMapSO textMap;
+    private string outputPath = "Assets/Modules/Data/Chunks";
+
     [MenuItem("Tools/Arkanoid/Chunk Importer")]
-    private static void OpenWindow() => GetWindow<BrickChunkImporter>().Show();
+    private static void OpenWindow()
+    {
+        // Создаем и показываем стандартное окно
+        GetWindow<BrickChunkImporter>("Chunk Importer").Show();
+    }
 
-    [Title("Settings")]
-    [SerializeField, Required] private TextAsset sourceFile;
-    [SerializeField, Required] private BrickTextMapSO textMap;
-    [SerializeField, FolderPath] private string outputPath = "Assets/Modules/Data/Chunks";
+    // ЭТО ГЛАВНОЕ ИЗМЕНЕНИЕ:
+    // Вместо магии атрибутов мы вручную говорим Unity, как рисовать интерфейс
+    private void OnGUI()
+    {
+        // 1. Рисуем заголовок (аналог [Title])
+        GUILayout.Label("Settings", EditorStyles.boldLabel);
+        GUILayout.Space(5);
 
-    [Button("Process TXT File", ButtonSizes.Large)]
+        // 2. Рисуем поля ввода (аналог [SerializeField])
+        // ObjectField позволяет перетаскивать файлы
+        sourceFile = (TextAsset)EditorGUILayout.ObjectField("Source File (.txt)", sourceFile, typeof(TextAsset), false);
+        textMap = (BrickTextMapSO)EditorGUILayout.ObjectField("Text Map SO", textMap, typeof(BrickTextMapSO), false);
+
+        GUILayout.Space(5);
+
+        // 3. Рисуем выбор папки (аналог [FolderPath])
+        // Делаем поле текстовым + кнопку "Выбрать"
+        EditorGUILayout.BeginHorizontal();
+        outputPath = EditorGUILayout.TextField("Output Path", outputPath);
+        if (GUILayout.Button("...", GUILayout.Width(30)))
+        {
+            string path = EditorUtility.OpenFolderPanel("Select Output Folder", "Assets", "");
+            if (!string.IsNullOrEmpty(path))
+            {
+                // Превращаем абсолютный путь в относительный Assets/...
+                if (path.StartsWith(Application.dataPath))
+                {
+                    outputPath = "Assets" + path.Substring(Application.dataPath.Length);
+                }
+                else
+                {
+                    // Если выбрали папку внутри проекта, Unity вернет абсолютный путь, нужно обрезать
+                    Debug.LogWarning("Please select a folder inside the Assets folder.");
+                }
+            }
+        }
+        EditorGUILayout.EndHorizontal();
+
+        GUILayout.Space(15);
+
+        // 4. Рисуем кнопку (аналог [Button])
+        // GUI.backgroundColor делает кнопку цветной (опционально)
+        GUI.backgroundColor = Color.green;
+        if (GUILayout.Button("Process TXT File", GUILayout.Height(40)))
+        {
+            ProcessFile();
+        }
+        GUI.backgroundColor = Color.white; // Возвращаем цвет обратно
+    }
+
+    // Логика осталась вашей, только убрали атрибут [Button]
     private void ProcessFile()
     {
-        if (sourceFile == null || textMap == null) return;
+        if (sourceFile == null || textMap == null)
+        {
+            EditorUtility.DisplayDialog("Error", "Please assign Source File and Text Map!", "OK");
+            return;
+        }
 
-        // --- ИСПРАВЛЕНИЕ ПУТИ ---
-        // 1. Превращаем абсолютный путь (C:/...) в относительный (Assets/...)
+        // --- Ваша логика обработки путей ---
         string relativePath = outputPath;
-        if (relativePath.StartsWith(Application.dataPath))
+        // Небольшая страховка, если путь уже относительный
+        if (!relativePath.StartsWith("Assets") && relativePath.Contains(Application.dataPath))
         {
             relativePath = "Assets" + relativePath.Substring(Application.dataPath.Length);
         }
 
-        // 2. Убедимся, что папка существует, иначе CreateAsset выдаст ошибку
         if (!AssetDatabase.IsValidFolder(relativePath))
         {
-            string parentFolder = System.IO.Path.GetDirectoryName(relativePath);
-            string newFolder = System.IO.Path.GetFileName(relativePath);
-            // Если папки нет - это сложнее создать через AssetDatabase, 
-            // поэтому просто используем System.IO для надежности, но CreateAsset любит существующие папки.
-            // Самый простой способ для Editor-скрипта:
-            System.IO.Directory.CreateDirectory(outputPath); // Создаем физически
-            AssetDatabase.Refresh(); // Обновляем Unity, чтобы он увидел папку
+            Directory.CreateDirectory(relativePath);
+            AssetDatabase.Refresh();
         }
         // ------------------------
 
         string text = sourceFile.text;
+        // Добавил System.StringSplitOptions для надежности
         string[] blocks = text.Split(new[] { "\r\n\r\n", "\n\n" }, System.StringSplitOptions.RemoveEmptyEntries);
 
         int count = 0;
@@ -55,7 +108,6 @@ public class BrickChunkImporter : OdinEditorWindow
             string rawName = lines[0].Trim();
             string safeName = Regex.Replace(rawName, @"[^a-zA-Z0-9_]", "");
 
-            // ИСПРАВЛЕНО: Используем relativePath вместо outputPath
             string path = $"{relativePath}/Chunk_{safeName}.asset";
 
             BrickChunkSO chunk = AssetDatabase.LoadAssetAtPath<BrickChunkSO>(path);
@@ -74,6 +126,9 @@ public class BrickChunkImporter : OdinEditorWindow
 
             for (int y = 0; y < dataLinesCount; y++)
             {
+                // Проверка на выход за границы массива
+                if (y + 1 >= lines.Length) continue;
+
                 string line = lines[y + 1];
                 string cleanLine = line.Replace("[", "").Replace("]", "");
 
@@ -81,11 +136,10 @@ public class BrickChunkImporter : OdinEditorWindow
 
                 for (int x = 0; x < cleanLine.Length; x++)
                 {
-                    // Защита от выхода за границы строки (если в файле ошибка)
                     if (x >= cleanLine.Length) break;
 
                     char symbol = cleanLine[x];
-                    BrickTypeSO type = textMap.GetBrickType(symbol); // У вас BrickTypeSO теперь
+                    BrickTypeSO type = textMap.GetBrickType(symbol);
 
                     if (type != null)
                     {
@@ -103,6 +157,8 @@ public class BrickChunkImporter : OdinEditorWindow
         }
 
         AssetDatabase.SaveAssets();
-        Debug.Log($"<b>[Importer]</b> Processed {count} chunks successfully at {relativePath}!");
+        // Используем DisplayDialog вместо простого лога, чтобы видеть результат явно
+        EditorUtility.DisplayDialog("Success", $"Processed {count} chunks successfully at:\n{relativePath}", "Cool");
     }
 }
+#endif

@@ -1,16 +1,16 @@
-﻿using UnityEngine;
-using DG.Tweening;
-using Sirenix.OdinInspector;
+﻿using DG.Tweening;
+using NaughtyAttributes;
 using System;
+using UnityEngine;
 
 public abstract class BaseView : MonoBehaviour, IAnimatedView
 {
     #region References
     // ТРЕБОВАНИЕ: Назначаем руками в Инспекторе
-    [BoxGroup("Base References"), Required(InfoMessageType.Error)]
+    [BoxGroup("Base References"), Required]
     [SerializeField] private Canvas _canvas;
 
-    [BoxGroup("Base References"), Required(InfoMessageType.Error)]
+    [BoxGroup("Base References"), Required]
     [SerializeField] private CanvasGroup _canvasGroup;
     #endregion
 

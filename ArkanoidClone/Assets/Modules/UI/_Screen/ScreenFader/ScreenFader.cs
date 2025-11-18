@@ -1,17 +1,17 @@
-﻿using UnityEngine;
-using DG.Tweening;
-using Sirenix.OdinInspector;
-using TMPro;
+﻿using DG.Tweening;
+using NaughtyAttributes;
 using System.Collections;
+using TMPro;
+using UnityEngine;
 
 public class ScreenFader : MonoBehaviour
 {
     private static ScreenFader _instance;
 
     #region Поля: Required
-    [PropertyOrder(-1), BoxGroup("Required"), Required(InfoMessageType.Error), SerializeField] private CanvasGroup _loadingCanvasGroup;
-    [PropertyOrder(-1), BoxGroup("Required"), Required(InfoMessageType.Error), SerializeField] private Transform _hourglassIconTransform;
-    [PropertyOrder(-1), BoxGroup("Required"), Required(InfoMessageType.Error), SerializeField] private TextMeshProUGUI _loadingText;
+    [ BoxGroup("Required"), Required, SerializeField] private CanvasGroup _loadingCanvasGroup;
+    [ BoxGroup("Required"), Required, SerializeField] private Transform _hourglassIconTransform;
+    [ BoxGroup("Required"), Required, SerializeField] private TextMeshProUGUI _loadingText;
     #endregion
 
     #region Поля

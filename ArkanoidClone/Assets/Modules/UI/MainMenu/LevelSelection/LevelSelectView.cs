@@ -1,5 +1,5 @@
 ﻿using DG.Tweening;
-using Sirenix.OdinInspector;
+using NaughtyAttributes;
 using System;
 using TMPro;
 using UnityEngine;
@@ -13,7 +13,6 @@ public class LevelSelectView : BaseView, IDataView<int>
     [BoxGroup("Buttons"), Required, SerializeField] private Button _btnBack;
     [BoxGroup("Buttons"), Required, SerializeField] private Button _btnStart;
 
-    [Title("Navigation")]
     [BoxGroup("Buttons"), Required, SerializeField] private Button _btnPrevBig;  // <<
     [BoxGroup("Buttons"), Required, SerializeField] private Button _btnPrev;     // <
     [BoxGroup("Buttons"), Required, SerializeField] private Button _btnNext;     // >

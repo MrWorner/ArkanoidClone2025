@@ -1,5 +1,5 @@
 ﻿// Требуется импорт Odin Inspector
-using Sirenix.OdinInspector;
+using NaughtyAttributes;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -13,13 +13,7 @@ using UnityEngine;
 /// </summary>
 public class ScriptExporter : MonoBehaviour
 {
-    [Title("Настройки Экспорта Скриптов")]
-    [InfoBox("Укажите папку, ИЗ КОТОРОЙ нужно скопировать скрипты. \nПо умолчанию это папка 'Assets' вашего проекта.")]
-    [FolderPath(AbsolutePath = true, RequireExistingPath = true)]
     public string sourceDirectory = "";
-
-    [InfoBox("Укажите папку, КУДА будут скопированы скрипты. \n(Например, папка вашего нового Git-репозитория)")]
-    [FolderPath(AbsolutePath = true)]
     public string destinationDirectory = "";
 
     /// <summary>
@@ -35,8 +29,7 @@ public class ScriptExporter : MonoBehaviour
         }
     }
 
-    [Button("🚀 Запустить Копирование Скриптов и Очистку", ButtonSizes.Large)]
-    [GUIColor(0.2f, 0.8f, 0.2f)] // Зеленая кнопка
+    [Button]
     private void ExportScriptsAndClean()
     {
         // 1. Валидация (проверка) путей

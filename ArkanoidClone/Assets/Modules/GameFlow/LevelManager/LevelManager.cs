@@ -1,7 +1,8 @@
-﻿using Sirenix.OdinInspector;
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using NaughtyAttributes;
+
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -20,9 +21,6 @@ public class LevelManager : MonoBehaviour
     // ========================================================================
     // PHASE 1: GEOMETRY
     // ========================================================================
-    [Title("Phase 1: Geometry")]
-
-    [FolderPath]
     public string geometryPath = "Assets/Modules/Data/Chunks/Geometry";
 
     [SerializeField] private List<BrickChunkSO> geometryChunks;
@@ -41,7 +39,6 @@ public class LevelManager : MonoBehaviour
     // ========================================================================
     // PHASE 2: PAINTING
     // ========================================================================
-    [Title("Phase 2: Painting")]
 
     [SerializeField] private BrickPaletteSO palette;
     public enum PaintPattern { BottomToTop, LeftToRight, ZebraHorizontal, CenterOut }
@@ -50,7 +47,6 @@ public class LevelManager : MonoBehaviour
     // ========================================================================
     // PHASE 3: OBSTACLES
     // ========================================================================
-    [Title("Phase 3: Obstacles")]
 
     [SerializeField] private bool enableObstacles = true;
 
@@ -60,7 +56,6 @@ public class LevelManager : MonoBehaviour
     [SerializeField] private int obstacleTemplateCount = 1;
     // -------------------
 
-    [FolderPath]
     public string obstaclesPath = "Assets/Modules/Data/Chunks/Obstacles";
 
     [SerializeField] private List<BrickChunkSO> obstacleChunks;
@@ -75,9 +70,8 @@ public class LevelManager : MonoBehaviour
     // ========================================================================
     // TOOLS
     // ========================================================================
-    [Title("Tools")]
 
-    [Button("📂 Загрузить Чанки", ButtonSizes.Large), GUIColor(0.6f, 1f, 0.6f)]
+    [Button]
     private void LoadChunksFromFolders()
     {
 #if UNITY_EDITOR
@@ -88,7 +82,7 @@ public class LevelManager : MonoBehaviour
 #endif
     }
 
-    [Button("🎲 Полный Рандом (Chaos)", ButtonSizes.Large), GUIColor(1f, 0.5f, 0.5f)]
+    [Button]
     public void BuildChaosLevel()
     {
         // Принудительно ставим Хаос режим (чтобы каждый угол вертелся)

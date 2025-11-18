@@ -1,34 +1,33 @@
 ﻿// НАЗНАЧЕНИЕ: Утилита для сборки множества C# файлов в один или несколько текстовых файлов (TXT) для удобной передачи кода ИИ, а также для копирования дополнительных файлов.
 // ОСНОВНЫЕ ЗАВИСИМОСТИ: Sirenix.OdinInspector для кастомного инспектора.
 // ПРИМЕЧАНИЕ: Скрипт предназначен для работы в редакторе Unity. Использует System.IO для работы с файлами.
-using UnityEngine;
-using Sirenix.OdinInspector;
-using System.IO;
-using System.Text;
-using System.Diagnostics;
+using NaughtyAttributes;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Text;
+using UnityEditor;
+using UnityEngine;
 
 public class CodeAggregator : MonoBehaviour
 {
 #if UNITY_EDITOR
     #region Поля: Required
-    [PropertyOrder(-10)]
-    [BoxGroup("REQUIRED", ShowLabel = false)]
+    [BoxGroup("REQUIRED")]
     [Tooltip("Папка, в которую будут сохранены итоговые файлы.")]
-    [FolderPath(AbsolutePath = true), Required(InfoMessageType.Error), SerializeField]
+    [ SerializeField]
     private string _outputFolderPath;
     #endregion
 
     #region Поля
     // --- AGGREGATION ---
-    [BoxGroup("SETTINGS")]
-    [BoxGroup("SETTINGS/Code Aggregation"), Tooltip("Пути к папкам, из которых нужно рекурсивно собрать все .cs файлы.")]
-    [FolderPath(AbsolutePath = true, RequireExistingPath = true), SerializeField]
+    [BoxGroup("SETTINGS"), Tooltip("Пути к папкам, из которых нужно рекурсивно собрать все .cs файлы.")]
+    [SerializeField]
     private List<string> _sourceFolderPaths = new List<string>();
 
     [BoxGroup("SETTINGS/Code Aggregation"), Tooltip("Пути к отдельным .cs файлам, которые нужно добавить к агрегации.")]
-    [FilePath(AbsolutePath = true, RequireExistingPath = true, Extensions = ".cs"), SerializeField]
+    [ SerializeField]
     private List<string> _sourceFilePaths = new List<string>();
 
     [BoxGroup("SETTINGS/Code Aggregation"), Tooltip("Имя конечного файла, если агрегация идет в один файл.")]
@@ -36,7 +35,7 @@ public class CodeAggregator : MonoBehaviour
 
     // --- ADDITIONAL FILES ---
     [BoxGroup("SETTINGS/Additional Files to Copy"), Tooltip("Выберите дополнительные файлы (любого типа), которые нужно скопировать в папку назначения.")]
-    [FilePath(AbsolutePath = true, RequireExistingPath = true), SerializeField]
+    [SerializeField]
     private List<string> _filesToCopyPaths = new List<string>();
 
     // --- FEATURES ---
@@ -67,8 +66,7 @@ public class CodeAggregator : MonoBehaviour
     /// <summary>
     /// Запускает настроенные процессы: агрегацию C# файлов и/или копирование дополнительных файлов.
     /// </summary>
-    [Button("Запустить процесс", ButtonSizes.Large), GUIColor(0.2f, 0.8f, 0.4f)]
-    [BoxGroup("ACTIONS", ShowLabel = false)]
+    [Button]
     public void StartProcess()
     {
         ColoredDebug.CLog(gameObject, "<color=cyan>CodeAggregator:</color> Запуск процесса...", _ColoredDebug);

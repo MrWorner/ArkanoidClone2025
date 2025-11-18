@@ -1,7 +1,7 @@
-﻿using System.Collections;
+﻿using NaughtyAttributes;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Sirenix.OdinInspector;
 
 public enum GameScene
 {

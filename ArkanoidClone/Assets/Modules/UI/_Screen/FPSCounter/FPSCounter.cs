@@ -1,11 +1,12 @@
-﻿using UnityEngine;
+﻿using NaughtyAttributes;
 using TMPro;
-using Sirenix.OdinInspector;
+using UnityEngine;
+
 
 public class FPSCounter : MonoBehaviour
 {
     #region Поля: Required
-    [PropertyOrder(-1), BoxGroup("Required"), Required(InfoMessageType.Error), SerializeField] private TextMeshProUGUI _fpsText;
+    [BoxGroup("Required"), Required, SerializeField] private TextMeshProUGUI _fpsText;
     #endregion Поля: Required
 
     #region Поля

@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using Sirenix.OdinInspector;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -13,7 +12,6 @@ public class BrickTextMapSO : ScriptableObject
         public BrickTypeSO brickType;
     }
 
-    [TableList]
     public List<CharToBrickMapping> mappings;
 
     public BrickTypeSO GetBrickType(char symbol)

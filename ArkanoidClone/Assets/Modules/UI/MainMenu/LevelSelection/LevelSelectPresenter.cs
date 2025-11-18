@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using System.Reflection;
-using Sirenix.OdinInspector;
+using NaughtyAttributes;
 
 public class LevelSelectPresenter : MonoBehaviour, IPresenter
 {
