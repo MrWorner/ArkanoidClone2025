@@ -137,7 +137,7 @@ PlayerSettings:
     16:10: 1
     16:9: 1
     Others: 1
-  bundleVersion: 1.0
+  bundleVersion: 0.1
   preloadedAssets: []
   metroInputSource: 0
   wsaTransparentSwapchain: 0
@@ -669,7 +669,7 @@ PlayerSettings:
   webGLDecompressionFallback: 0
   webGLPowerPreference: 2
   scriptingDefineSymbols:
-    Android: DOTWEEN;LEGACY_INPUT_MANGER
+    Android: DOTWEEN;LEGACY_INPUT_MANGER;ODIN_INSPECTOR;ODIN_INSPECTOR_3;ODIN_INSPECTOR_3_1;ODIN_INSPECTOR_3_2;ODIN_INSPECTOR_3_3
     EmbeddedLinux: DOTWEEN;LEGACY_INPUT_MANGER
     GameCoreScarlett: DOTWEEN;LEGACY_INPUT_MANGER
     GameCoreXboxOne: DOTWEEN;LEGACY_INPUT_MANGER
