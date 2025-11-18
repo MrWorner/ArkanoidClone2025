@@ -1,68 +1,118 @@
-﻿using UnityEngine;
+﻿using MiniIT.BALL;
+using NaughtyAttributes;
 using System.Collections.Generic;
+using UnityEngine;
 
-public class BallPool : MonoBehaviour
+namespace MiniIT.BALL
 {
-    public static BallPool Instance { get; private set; }
-
-    [SerializeField] private BallController ballPrefab;
-    [SerializeField] private int initialPoolSize = 5;
-
-    private List<BallController> _allBalls = new List<BallController>();
-
-    void Awake()
+    public class BallPool : MonoBehaviour
     {
-        Instance = this;
-        // Создаем стартовый запас
-        for (int i = 0; i < initialPoolSize; i++)
+        // ========================================================================
+        // --- PROPERTIES ---
+        // ========================================================================
+
+        public static BallPool Instance
         {
-            CreateNewBall(false);
+            get;
+            private set;
         }
-    }
 
-    public BallController GetBall()
-    {
-        foreach (var ball in _allBalls)
+        // ========================================================================
+        // --- SERIALIZED FIELDS ---
+        // ========================================================================
+
+        [BoxGroup("POOL CONFIG")]
+        [SerializeField, Required]
+        private BallController ballPrefab = null;
+
+        [BoxGroup("POOL CONFIG")]
+        [SerializeField]
+        private int initialPoolSize = 5;
+
+        // ========================================================================
+        // --- PRIVATE FIELDS ---
+        // ========================================================================
+
+        private List<BallController> allBalls = new List<BallController>();
+
+        // ========================================================================
+        // --- PUBLIC METHODS ---
+        // ========================================================================
+
+        /// <summary>
+        /// Retrieves an inactive ball from the pool or creates a new one if needed.
+        /// </summary>
+        public BallController GetBall()
         {
-            if (!ball.gameObject.activeSelf)
+            foreach (BallController ball in allBalls)
             {
-                ball.gameObject.SetActive(true);
-                return ball;
+                if (!ball.gameObject.activeSelf)
+                {
+                    ball.gameObject.SetActive(true);
+                    return ball;
+                }
             }
+
+            return CreateNewBall(true);
         }
-        return CreateNewBall(true);
-    }
 
-    public void ReturnBall(BallController ball)
-    {
-        ball.gameObject.SetActive(false);
-    }
-
-    // Метод для сброса всех мячей (при старте уровня)
-    public void ReturnAllBalls()
-    {
-        foreach (var ball in _allBalls)
+        /// <summary>
+        /// Returns a specific ball to the pool (deactivates it).
+        /// </summary>
+        public void ReturnBall(BallController ball)
         {
             ball.gameObject.SetActive(false);
         }
-    }
 
-    // Получить список всех АКТИВНЫХ мячей (для клонирования)
-    public List<BallController> GetActiveBalls()
-    {
-        List<BallController> active = new List<BallController>();
-        foreach (var ball in _allBalls)
+        /// <summary>
+        /// Deactivates all balls currently in the pool.
+        /// </summary>
+        public void ReturnAllBalls()
         {
-            if (ball.gameObject.activeSelf) active.Add(ball);
+            foreach (BallController ball in allBalls)
+            {
+                ball.gameObject.SetActive(false);
+            }
         }
-        return active;
-    }
 
-    private BallController CreateNewBall(bool isActive)
-    {
-        BallController newBall = Instantiate(ballPrefab, transform);
-        _allBalls.Add(newBall);
-        newBall.gameObject.SetActive(isActive);
-        return newBall;
+        /// <summary>
+        /// Returns a list of all currently active balls (useful for cloning logic).
+        /// </summary>
+        public List<BallController> GetActiveBalls()
+        {
+            List<BallController> active = new List<BallController>();
+
+            foreach (BallController ball in allBalls)
+            {
+                if (ball.gameObject.activeSelf)
+                {
+                    active.Add(ball);
+                }
+            }
+
+            return active;
+        }
+
+        // ========================================================================
+        // --- PRIVATE METHODS ---
+        // ========================================================================
+
+        private void Awake()
+        {
+            Instance = this;
+
+            for (int i = 0; i < initialPoolSize; i++)
+            {
+                CreateNewBall(false);
+            }
+        }
+
+        private BallController CreateNewBall(bool isActive)
+        {
+            BallController newBall = Instantiate(ballPrefab, transform);
+            allBalls.Add(newBall);
+            newBall.gameObject.SetActive(isActive);
+            return newBall;
+        }
     }
 }

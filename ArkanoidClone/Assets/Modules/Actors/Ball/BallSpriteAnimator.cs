@@ -1,40 +1,52 @@
 ﻿using UnityEngine;
+using NaughtyAttributes;
 
-[RequireComponent(typeof(Rigidbody2D))] // Нужен RigidBody для получения скорости
-public class BallSpriteAnimator : MonoBehaviour
+namespace MiniIT.BALL
 {
-    [Header("Настройки Вращения")]
-    [Tooltip("Насколько быстро мяч вращается относительно его скорости. Больше значение = быстрее вращается.")]
-    [SerializeField] private float rotationSpeedMultiplier = 100f; // Умножитель скорости вращения
-
-    [Tooltip("Направление вращения по оси Z. 1 = по часовой, -1 = против часовой.")]
-    [SerializeField] private float rotationDirectionZ = -1f; // По умолчанию -1 для вращения против часовой стрелки при движении вправо
-
-    private Rigidbody2D _rb;
-    private Transform _ballTransform; // Ссылка на сам transform мяча
-
-    void Awake()
+    [RequireComponent(typeof(Rigidbody2D))]
+    public class BallSpriteAnimator : MonoBehaviour
     {
-        _rb = GetComponent<Rigidbody2D>();
-        _ballTransform = transform; // Кешируем transform
-    }
+        // ========================================================================
+        // --- SERIALIZED FIELDS ---
+        // ========================================================================
 
-    void FixedUpdate() // FixedUpdate для работы с физикой
-    {
-        // Получаем горизонтальную скорость
-        float horizontalVelocity = _rb.velocity.x;
+        [BoxGroup("ROTATION SETTINGS")]
+        [Header("Rotation Settings")]
+        [Tooltip("Speed multiplier relative to velocity.")]
+        [SerializeField]
+        private float rotationSpeedMultiplier = 100f;
 
-        // Если мяч движется, вращаем его
-        if (Mathf.Abs(horizontalVelocity) > 0.01f) // Проверяем, что мяч движется хоть немного
+        [BoxGroup("ROTATION SETTINGS")]
+        [Tooltip("Z-axis direction: 1 for CW, -1 for CCW.")]
+        [SerializeField]
+        private float rotationDirectionZ = -1f;
+
+        // ========================================================================
+        // --- PRIVATE FIELDS ---
+        // ========================================================================
+
+        private Rigidbody2D rb = null;
+        private Transform ballTransform = null;
+
+        // ========================================================================
+        // --- PRIVATE METHODS ---
+        // ========================================================================
+
+        private void Awake()
         {
-            // Рассчитываем угол вращения за этот FixedUpdate
-            // horizontalVelocity * rotationSpeedMultiplier: чем быстрее движется, тем быстрее вращается
-            // Time.fixedDeltaTime: чтобы вращение было независимым от частоты кадров
-            // rotationDirectionZ: чтобы контролировать направление вращения
-            float rotationAngle = horizontalVelocity * rotationSpeedMultiplier * Time.fixedDeltaTime * rotationDirectionZ;
+            rb = GetComponent<Rigidbody2D>();
+            ballTransform = transform;
+        }
 
-            // Применяем вращение вокруг оси Z
-            _ballTransform.Rotate(0, 0, rotationAngle);
+        private void FixedUpdate()
+        {
+            float horizontalVelocity = rb.velocity.x;
+
+            if (Mathf.Abs(horizontalVelocity) > 0.01f)
+            {
+                float rotationAngle = horizontalVelocity * rotationSpeedMultiplier * Time.fixedDeltaTime * rotationDirectionZ;
+                ballTransform.Rotate(0, 0, rotationAngle);
+            }
         }
     }
 }

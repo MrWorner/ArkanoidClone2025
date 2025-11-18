@@ -1,4 +1,5 @@
-﻿using MiniIT.CORE;
+﻿using MiniIT.BALL;
+using MiniIT.CORE;
 using UnityEngine;
 
 // Этот скрипт все еще "прибивает" себя к низу,
