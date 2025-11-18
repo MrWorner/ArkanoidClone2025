@@ -4,6 +4,7 @@ using MiniIT.BRICK;
 using MiniIT.LEVELS;
 using MiniIT.POWERUP;
 using MiniIT.SCENELOADER;
+using MiniIT.UI;
 using NaughtyAttributes;
 using System.Collections;
 using System.Collections.Generic;

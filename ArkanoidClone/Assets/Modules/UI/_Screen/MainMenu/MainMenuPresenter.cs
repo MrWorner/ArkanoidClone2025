@@ -1,94 +1,110 @@
 ﻿using UnityEngine;
-using UnityEditor; // Нужно для остановки игры в редакторе
+using UnityEditor;
 using NaughtyAttributes;
 using MiniIT.LEVELS;
 using MiniIT.AUDIO;
-using MiniIT.UI;
 
-public class MainMenuPresenter : MonoBehaviour, IPresenter
+namespace MiniIT.UI
 {
-    [BoxGroup("References"), Required]
-    [SerializeField] private MainMenuView _view;
-
-    [BoxGroup("References"), Required]
-    [SerializeField] private LevelSelectPresenter _levelSelectPresenter;
-
-    private void Start()
+    public class MainMenuPresenter : MonoBehaviour, IPresenter
     {
-        Initialize();
-        _view.Show();
+        // ========================================================================
+        // --- SERIALIZED FIELDS ---
+        // ========================================================================
 
-        if (MusicManager.Instance != null)
+        [BoxGroup("REFERENCES")]
+        [SerializeField, Required]
+        private MainMenuView view = null;
+
+        [BoxGroup("REFERENCES")]
+        [SerializeField, Required]
+        private LevelSelectPresenter levelSelectPresenter = null;
+
+        // ========================================================================
+        // --- PUBLIC METHODS ---
+        // ========================================================================
+
+        public void Initialize()
         {
-            MusicManager.Instance.PlayMenuMusic();
+            // Main Buttons
+            view.NewGameButton.onClick.AddListener(OnNewGameClicked);
+            view.QuitButton.onClick.AddListener(OnQuitClicked);
+
+            // Confirmation Buttons
+            view.ConfirmYesButton.onClick.AddListener(OnConfirmQuit);
+            view.ConfirmNoButton.onClick.AddListener(OnCancelQuit);
         }
 
-        // При старте игры в главном меню кирпичи не должны быть видны
-        if (LevelManager.Instance != null)
+        public void Show()
         {
-            LevelManager.Instance.SetLevelVisibility(false);
+            view.Show();
         }
-    }
 
-    public void Initialize()
-    {
-        // Основные кнопки
-        _view.NewGameButton.onClick.AddListener(OnNewGameClicked);
-        _view.QuitButton.onClick.AddListener(OnQuitClicked);
-
-        // Кнопки подтверждения
-        _view.ConfirmYesButton.onClick.AddListener(OnConfirmQuit);
-        _view.ConfirmNoButton.onClick.AddListener(OnCancelQuit);
-    }
-
-    #region Handlers
-
-    private void OnNewGameClicked()
-    {
-        SoundManager.Instance.PlayOneShot(SoundType.ButtonClick);
-        _view.Hide(0.3f, () =>
+        public void Dispose()
         {
-            if (_levelSelectPresenter != null)
-                _levelSelectPresenter.Show();
-        });
-    }
+            // Clean up listeners
+            view.NewGameButton.onClick.RemoveAllListeners();
+            view.QuitButton.onClick.RemoveAllListeners();
+        }
 
-    // 1. Нажали кнопку "Exit" -> Показываем попап
-    private void OnQuitClicked()
-    {
-        SoundManager.Instance.PlayOneShot(SoundType.ButtonClick);
-        _view.SetConfirmationActive(true);
-    }
+        // ========================================================================
+        // --- PRIVATE METHODS & UNITY CALLBACKS ---
+        // ========================================================================
 
-    // 2. Нажали "Нет" -> Скрываем попап
-    private void OnCancelQuit()
-    {
-        SoundManager.Instance.PlayOneShot(SoundType.ButtonClick);
-        _view.SetConfirmationActive(false);
-    }
+        private void Start()
+        {
+            Initialize();
+            view.Show();
 
-    // 3. Нажали "Да" -> Выходим
-    private void OnConfirmQuit()
-    {
-        SoundManager.Instance.PlayOneShot(SoundType.ButtonClick);
-        Debug.Log("[MainMenu] Quitting Game...");
+            if (MusicManager.Instance != null)
+            {
+                MusicManager.Instance.PlayMenuMusic();
+            }
 
-        // Эта конструкция работает и в Редакторе Unity, и в сбилженной игре
+            // Ensure bricks are hidden in Main Menu
+            if (LevelManager.Instance != null)
+            {
+                LevelManager.Instance.SetLevelVisibility(false);
+            }
+        }
+
+        // --- EVENT HANDLERS ---
+
+        private void OnNewGameClicked()
+        {
+            SoundManager.Instance.PlayOneShot(SoundType.ButtonClick);
+
+            view.Hide(0.3f, () =>
+            {
+                if (levelSelectPresenter != null)
+                {
+                    levelSelectPresenter.Show();
+                }
+            });
+        }
+
+        private void OnQuitClicked()
+        {
+            SoundManager.Instance.PlayOneShot(SoundType.ButtonClick);
+            view.SetConfirmationActive(true);
+        }
+
+        private void OnCancelQuit()
+        {
+            SoundManager.Instance.PlayOneShot(SoundType.ButtonClick);
+            view.SetConfirmationActive(false);
+        }
+
+        private void OnConfirmQuit()
+        {
+            SoundManager.Instance.PlayOneShot(SoundType.ButtonClick);
+            Debug.Log("[MainMenu] Quitting Game...");
+
 #if UNITY_EDITOR
-        EditorApplication.isPlaying = false;
+            EditorApplication.isPlaying = false;
 #else
-        Application.Quit();
+            Application.Quit();
 #endif
-    }
-
-    #endregion
-
-    public void Show() => _view.Show();
-
-    public void Dispose()
-    {
-        // Хорошая практика - отписываться, хотя для меню это не критично
-        _view.NewGameButton.onClick.RemoveAllListeners();
-        _view.QuitButton.onClick.RemoveAllListeners();
+        }
     }
 }

@@ -1,15 +1,24 @@
-﻿// ДЕМОНСТРАЦИЯ: Простой класс данных
-using System;
+﻿using System;
 
-public class LevelSelectionModel
+namespace MiniIT.UI
 {
-    public int CurrentLevel { get; private set; } = 1;
-    public int MinLevel { get; } = 1;
-    public int MaxLevel { get; } = 9999;
-
-    public void SetLevel(int level)
+    public class LevelSelectionModel
     {
-        // ДЕМОНСТРАЦИЯ: Math.Clamp (C# feature)
-        CurrentLevel = Math.Clamp(level, MinLevel, MaxLevel);
+        // ========================================================================
+        // --- PROPERTIES ---
+        // ========================================================================
+
+        public int CurrentLevel { get; private set; } = 1;
+        public int MinLevel { get; } = 1;
+        public int MaxLevel { get; } = 9999;
+
+        // ========================================================================
+        // --- PUBLIC METHODS ---
+        // ========================================================================
+
+        public void SetLevel(int level)
+        {
+            CurrentLevel = Math.Clamp(level, MinLevel, MaxLevel);
+        }
     }
 }

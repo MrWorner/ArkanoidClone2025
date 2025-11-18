@@ -1794,8 +1794,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb7bcda48892f6d4d862ee7914735955, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _view: {fileID: 5945477301467669083}
-  _mainMenuPresenter: {fileID: 0}
+  view: {fileID: 5945477301467669083}
+  mainMenuPresenter: {fileID: 0}
 --- !u!114 &5945477301467669083
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1811,13 +1811,13 @@ MonoBehaviour:
   canvas: {fileID: 5945477301033946605}
   canvasGroup: {fileID: 5945477301467669084}
   defaultFadeDuration: 0.3
-  _levelText: {fileID: 5945477300445881488}
-  _btnBack: {fileID: 5945477300356894300}
-  _btnStart: {fileID: 5945477300201514789}
-  _btnPrevBig: {fileID: 5945477300777163359}
-  _btnPrev: {fileID: 5945477300325859350}
-  _btnNext: {fileID: 5945477300749314772}
-  _btnNextBig: {fileID: 5945477300041339702}
+  levelText: {fileID: 5945477300445881488}
+  btnBack: {fileID: 5945477300356894300}
+  btnStart: {fileID: 5945477300201514789}
+  btnPrevBig: {fileID: 5945477300777163359}
+  btnPrev: {fileID: 5945477300325859350}
+  btnNext: {fileID: 5945477300749314772}
+  btnNextBig: {fileID: 5945477300041339702}
 --- !u!225 &5945477301467669084
 CanvasGroup:
   m_ObjectHideFlags: 0

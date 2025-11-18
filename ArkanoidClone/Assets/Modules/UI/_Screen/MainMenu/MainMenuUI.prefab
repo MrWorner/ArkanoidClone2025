@@ -1542,8 +1542,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1103742175a6a27468e304cccd3b3f37, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _view: {fileID: 8785424870319612646}
-  _levelSelectPresenter: {fileID: 0}
+  view: {fileID: 8785424870319612646}
+  levelSelectPresenter: {fileID: 0}
 --- !u!114 &8785424870319612646
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1559,11 +1559,11 @@ MonoBehaviour:
   canvas: {fileID: 8785424869830904083}
   canvasGroup: {fileID: 8785424870319612647}
   defaultFadeDuration: 0.3
-  NewGameButton: {fileID: 8785424870241726646}
-  QuitButton: {fileID: 8785424870923239261}
-  _confirmationPanel: {fileID: 8785424870868602005}
-  ConfirmYesButton: {fileID: 8785424869435847244}
-  ConfirmNoButton: {fileID: 8785424870891017187}
+  newGameButton: {fileID: 8785424870241726646}
+  quitButton: {fileID: 8785424870923239261}
+  confirmationPanel: {fileID: 8785424870868602005}
+  confirmYesButton: {fileID: 8785424869435847244}
+  confirmNoButton: {fileID: 8785424870891017187}
 --- !u!225 &8785424870319612647
 CanvasGroup:
   m_ObjectHideFlags: 0

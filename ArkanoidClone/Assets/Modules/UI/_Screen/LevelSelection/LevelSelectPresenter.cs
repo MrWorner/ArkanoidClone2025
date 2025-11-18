@@ -1,91 +1,130 @@
-﻿using UnityEngine;
-using NaughtyAttributes;
-using MiniIT.LEVELS;
-using MiniIT.AUDIO;
-using MiniIT.SCENELOADER;
+﻿using MiniIT.AUDIO;
 using MiniIT.CORE;
-using MiniIT.UI;
+using MiniIT.LEVELS;
+using MiniIT.SCENELOADER;
+using NaughtyAttributes;
+using UnityEngine;
 
-public class LevelSelectPresenter : MonoBehaviour, IPresenter
+namespace MiniIT.UI
 {
-    [BoxGroup("Dependencies"), Required]
-    [SerializeField] private LevelSelectView _view;
-
-    [BoxGroup("Dependencies"), Required]
-    [SerializeField] private MainMenuPresenter _mainMenuPresenter;
-
-    private void Start()
+    public class LevelSelectPresenter : MonoBehaviour, IPresenter
     {
-        Initialize();
-    }
+        // ========================================================================
+        // --- SERIALIZED FIELDS ---
+        // ========================================================================
 
-    public void Initialize()
-    {
-        // Подписка на кнопки навигации
-        _view.OnNextClicked += () => ChangeLevel(1);
-        _view.OnPrevClicked += () => ChangeLevel(-1);
-        _view.OnNextBigClicked += () => ChangeLevel(10);
-        _view.OnPrevBigClicked += () => ChangeLevel(-10);
+        [BoxGroup("DEPENDENCIES")]
+        [SerializeField, Required]
+        private LevelSelectView view = null;
 
-        _view.OnBackClicked += OnBackClicked;
-        _view.OnStartClicked += OnStartClicked;
-    }
+        [BoxGroup("DEPENDENCIES")]
+        [SerializeField, Required]
+        private MainMenuPresenter mainMenuPresenter = null;
 
-    public void Show()
-    {
-        _view.Show();
+        // ========================================================================
+        // --- PUBLIC METHODS ---
+        // ========================================================================
 
-        // 1. При открытии экрана выбора уровня - ВКЛЮЧАЕМ видимость кирпичей
-        LevelManager.Instance.SetLevelVisibility(true);
-
-        // 2. Генерируем уровень который сейчас сохранен в GameInstance
-        RefreshLevelGeneration();
-    }
-
-    private void ChangeLevel(int amount)
-    {
-        SoundManager.Instance.PlayOneShot(SoundType.ButtonClick);
-
-        // 1. Берем текущий уровень
-        int current = GameInstance.Instance.SelectedLevelIndex;
-
-        // 2. Меняем и сохраняем в GameInstance (он там внутри сам посчитает Seed)
-        GameInstance.Instance.SetLevelData(current + amount);
-
-        // 3. Обновляем UI и Генерируем мир
-        RefreshLevelGeneration();
-    }
-
-    private void RefreshLevelGeneration()
-    {
-        // Обновляем текст во View
-        _view.UpdateView(GameInstance.Instance.SelectedLevelIndex);
-
-        // Запускаем генерацию уровня по Seed
-        LevelManager.Instance.GenerateLevelBySeed(GameInstance.Instance.CurrentLevelSeed);
-    }
-
-    private void OnBackClicked()
-    {
-        SoundManager.Instance.PlayOneShot(SoundType.ButtonClick);
-
-        _view.Hide(0.3f, () =>
+        public void Initialize()
         {
-            // 1. При выходе назад - ВЫКЛЮЧАЕМ видимость кирпичей
-            LevelManager.Instance.SetLevelVisibility(false);
+            // Subscribe to view events
+            view.OnNextClicked += () => ChangeLevel(1);
+            view.OnPrevClicked += () => ChangeLevel(-1);
+            view.OnNextBigClicked += () => ChangeLevel(10);
+            view.OnPrevBigClicked += () => ChangeLevel(-10);
 
-            // 2. Показываем главное меню
-            if (_mainMenuPresenter != null)
-                _mainMenuPresenter.Show();
-        });
+            view.OnBackClicked += OnBackClicked;
+            view.OnStartClicked += OnStartClicked;
+        }
+
+        public void Show()
+        {
+            view.Show();
+
+            // 1. Enable brick visibility when entering level selection
+            if (LevelManager.Instance != null)
+            {
+                LevelManager.Instance.SetLevelVisibility(true);
+            }
+
+            // 2. Regenerate current level preview
+            RefreshLevelGeneration();
+        }
+
+        public void Hide()
+        {
+            view.Hide();
+        }
+
+        public void Dispose()
+        {
+            // Cleanup logic if needed
+        }
+
+        // ========================================================================
+        // --- PRIVATE METHODS & UNITY CALLBACKS ---
+        // ========================================================================
+
+        private void Start()
+        {
+            Initialize();
+        }
+
+        private void ChangeLevel(int amount)
+        {
+            SoundManager.Instance.PlayOneShot(SoundType.ButtonClick);
+
+            if (GameInstance.Instance == null)
+            {
+                return;
+            }
+
+            int current = GameInstance.Instance.SelectedLevelIndex;
+
+            // Update global game instance (handles bounds check internally)
+            GameInstance.Instance.SetLevelData(current + amount);
+
+            RefreshLevelGeneration();
+        }
+
+        private void RefreshLevelGeneration()
+        {
+            if (GameInstance.Instance == null || LevelManager.Instance == null)
+            {
+                return;
+            }
+
+            // Update UI
+            view.UpdateView(GameInstance.Instance.SelectedLevelIndex);
+
+            // Generate Level
+            LevelManager.Instance.GenerateLevelBySeed(GameInstance.Instance.CurrentLevelSeed);
+        }
+
+        private void OnBackClicked()
+        {
+            SoundManager.Instance.PlayOneShot(SoundType.ButtonClick);
+
+            view.Hide(0.3f, () =>
+            {
+                // 1. Disable brick visibility
+                if (LevelManager.Instance != null)
+                {
+                    LevelManager.Instance.SetLevelVisibility(false);
+                }
+
+                // 2. Show Main Menu
+                if (mainMenuPresenter != null)
+                {
+                    mainMenuPresenter.Show();
+                }
+            });
+        }
+
+        private void OnStartClicked()
+        {
+            SoundManager.Instance.PlayOneShot(SoundType.ButtonClickStart);
+            SceneLoader.Instance.LoadNextScene(GameScene.GameScene);
+        }
     }
-
-    private void OnStartClicked()
-    {
-        SoundManager.Instance.PlayOneShot(SoundType.ButtonClickStart);
-        SceneLoader.Instance.LoadNextScene(GameScene.GameScene);
-    }
-
-    public void Hide() => _view.Hide();
-    public void Dispose() { }
 }

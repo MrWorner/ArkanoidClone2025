@@ -1,42 +1,65 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using NaughtyAttributes;
-using System;
-using MiniIT.UI;
 
-public class MainMenuView : BaseView
+namespace MiniIT.UI
 {
-    #region Main Buttons
-    [BoxGroup("Main Menu UI"), Required]
-    [SerializeField] public Button NewGameButton;
-
-    // Новая кнопка выхода
-    [BoxGroup("Main Menu UI"), Required]
-    [SerializeField] public Button QuitButton;
-    #endregion
-
-    #region Confirmation Popup
-    // Ссылка на объект панели (Panel_Confirmation), внутри которой текст и 2 кнопки
-    [BoxGroup("Confirmation Popup"), Required]
-    [SerializeField] private GameObject _confirmationPanel;
-
-    [BoxGroup("Confirmation Popup"), Required]
-    [SerializeField] public Button ConfirmYesButton;
-
-    [BoxGroup("Confirmation Popup"), Required]
-    [SerializeField] public Button ConfirmNoButton;
-    #endregion
-
-    protected override void Awake()
+    public class MainMenuView : BaseView
     {
-        base.Awake();
-        // При старте гарантированно скрываем попап
-        SetConfirmationActive(false);
-    }
+        // ========================================================================
+        // --- SERIALIZED FIELDS ---
+        // ========================================================================
 
-    public void SetConfirmationActive(bool isActive)
-    {
-        if (_confirmationPanel != null)
-            _confirmationPanel.SetActive(isActive);
+        [BoxGroup("MAIN MENU UI")]
+        [SerializeField, Required]
+        private Button newGameButton = null;
+
+        [BoxGroup("MAIN MENU UI")]
+        [SerializeField, Required]
+        private Button quitButton = null;
+
+        [BoxGroup("CONFIRMATION POPUP")]
+        [SerializeField, Required]
+        private GameObject confirmationPanel = null;
+
+        [BoxGroup("CONFIRMATION POPUP")]
+        [SerializeField, Required]
+        private Button confirmYesButton = null;
+
+        [BoxGroup("CONFIRMATION POPUP")]
+        [SerializeField, Required]
+        private Button confirmNoButton = null;
+
+        // ========================================================================
+        // --- PROPERTIES (Exposing UI elements for Presenter) ---
+        // ========================================================================
+
+        public Button NewGameButton => newGameButton;
+        public Button QuitButton => quitButton;
+        public Button ConfirmYesButton => confirmYesButton;
+        public Button ConfirmNoButton => confirmNoButton;
+
+        // ========================================================================
+        // --- PUBLIC METHODS ---
+        // ========================================================================
+
+        public void SetConfirmationActive(bool isActive)
+        {
+            if (confirmationPanel != null)
+            {
+                confirmationPanel.SetActive(isActive);
+            }
+        }
+
+        // ========================================================================
+        // --- PROTECTED METHODS ---
+        // ========================================================================
+
+        protected override void Awake()
+        {
+            base.Awake();
+            // Ensure popup is hidden on start
+            SetConfirmationActive(false);
+        }
     }
 }
