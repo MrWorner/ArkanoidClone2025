@@ -1,10 +1,11 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System;
 
 public class GameManager : MonoBehaviour
 {
-    // ... (Ваши поля и Start/Awake без изменений) ...
+    // --- Singleton ---
     public static GameManager Instance { get; private set; }
 
     [Header("Настройки Игры")]
@@ -14,16 +15,21 @@ public class GameManager : MonoBehaviour
     [Header("Ссылки")]
     [SerializeField] private BallPool ballPool;
     [SerializeField] private LevelManager levelManager;
-    [SerializeField] private UIManager uiManager;
+    // СТАРТ РЕФАКТОРИНГА: Новые ссылки для разделения ответственности
+    [SerializeField] private GameHUDView hudView;
+    [SerializeField] private GameScreenManager screenManager;
+    // КОНЕЦ РЕФАКТОРИНГА
     [SerializeField] private PowerUpPool powerUpPool;
 
     [Header("Бонусы")]
     [SerializeField] private int startBricksForPowerUp = 10;
     [SerializeField] private int powerUpStepIncrement = 5;
 
+    // --- Свойства ---
     public int CurrentLives { get; private set; }
     public int CurrentScore { get; private set; }
 
+    // --- Внутренние поля ---
     private int _currentLevel = 1;
     private int _activeBrickCount;
     private int _bricksDestroyedCounter;
@@ -37,14 +43,22 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        if (uiManager == null || levelManager == null || ballPool == null || powerUpPool == null)
+        // Обновленная проверка ссылок
+        if (hudView == null || screenManager == null || levelManager == null || ballPool == null || powerUpPool == null)
         {
-            Debug.LogError("GameManager: Не все ссылки назначены!");
+            Debug.LogError("GameManager: Отсутствуют ссылки на основные компоненты (HUD, ScreenManager, LevelManager, BallPool или PowerUpPool)!");
             return;
         }
+
         Brick.OnAnyBrickDestroyed += HandleBrickDestroyed;
+        PowerUp.OnPowerUpPickedUp += HandlePowerUpPickup; 
+
         StartNewGame();
     }
+
+    // ========================================================================
+    // --- ИНИЦИАЛИЗАЦИЯ И УПРАВЛЕНИЕ СЧЕТОМ/ЖИЗНЯМИ ---
+    // ========================================================================
 
     void StartNewGame()
     {
@@ -55,21 +69,56 @@ public class GameManager : MonoBehaviour
         if (GameInstance.Instance != null) _currentLevel = GameInstance.Instance.SelectedLevelIndex;
         else _currentLevel = 1;
 
-        uiManager.UpdateLives(CurrentLives);
-        uiManager.UpdateScore(CurrentScore);
-        uiManager.UpdateLevel(_currentLevel);
+        // СТАРТ РЕФАКТОРИНГА: Вызов методов HUD
+        if (hudView != null) hudView.UpdateLives(CurrentLives);
+        if (hudView != null) hudView.UpdateScore(CurrentScore);
+        if (hudView != null) hudView.UpdateLevel(_currentLevel);
+        // КОНЕЦ РЕФАКТОРИНГА
+
         ResetPowerUpLogic();
         StartCoroutine(LoadLevelRoutine(_currentLevel, false));
     }
 
-    // ... (Методы SetBrickCount, AddScore, ActivateTripleBall, HandleBallLost, HandleBrickDestroyed без изменений) ...
-    public void SetBrickCount(int count) { _activeBrickCount = count; }
+    public void SetBrickCount(int count)
+    {
+        _activeBrickCount = count;
+        if (_activeBrickCount <= 0)
+        {
+            StartCoroutine(VictorySequence());
+        }
+    }
 
     public void AddScore(int amount)
     {
         CurrentScore += amount;
-        if (uiManager != null) uiManager.UpdateScore(CurrentScore);
+        // СТАРТ РЕФАКТОРИНГА: Вызов методов HUD
+        if (hudView != null) hudView.UpdateScore(CurrentScore);
+        // КОНЕЦ РЕФАКТОРИНГА
     }
+
+    private void LoseLife()
+    {
+        if (ignoreBottomWall) { RespawnMainBall(); return; }
+
+        CurrentLives--;
+        // СТАРТ РЕФАКТОРИНГА: Вызов методов HUD
+        if (hudView != null) hudView.UpdateLives(CurrentLives);
+        // КОНЕЦ РЕФАКТОРИНГА
+
+        if (CurrentLives <= 0)
+        {
+            StartCoroutine(GameOverSequence());
+        }
+        else
+        {
+            SoundManager.Instance.PlayOneShot(SoundType.LifeLost);
+            RespawnMainBall();
+        }
+    }
+
+    // ========================================================================
+    // --- ЛОГИКА МЯЧА И БОНУСОВ ---
+    // ========================================================================
 
     public void ActivateTripleBall()
     {
@@ -103,11 +152,9 @@ public class GameManager : MonoBehaviour
     private void HandleBrickDestroyed(Vector3 brickPos)
     {
         _activeBrickCount--;
-        if (_activeBrickCount <= 0)
-        {
-            StartCoroutine(VictorySequence());
-            return;
-        }
+        // Проверка на победу теперь внутри SetBrickCount, но оставим здесь на случай, если логика другая
+        // if (_activeBrickCount <= 0) { StartCoroutine(VictorySequence()); return; } 
+
         _bricksDestroyedCounter++;
         if (_bricksDestroyedCounter >= _currentPowerUpThreshold)
         {
@@ -123,79 +170,59 @@ public class GameManager : MonoBehaviour
         _currentPowerUpThreshold = startBricksForPowerUp;
     }
 
-    // --- ИСПРАВЛЕННЫЙ МЕТОД LOSE LIFE ---
-    private void LoseLife()
-    {
-        if (ignoreBottomWall) { RespawnMainBall(); return; }
-
-        CurrentLives--;
-        if (uiManager != null) uiManager.UpdateLives(CurrentLives);
-
-        if (CurrentLives <= 0)
-        {
-            // ЗАПУСКАЕМ КОРУТИНУ Game Over
-            StartCoroutine(GameOverSequence());
-        }
-        else
-        {
-            SoundManager.Instance.PlayOneShot(SoundType.LifeLost);
-            RespawnMainBall();
-        }
-    }
-    // --------------------------------------
-
-    // --- НОВАЯ КОРУТИНА GAME OVER ---
-    private IEnumerator GameOverSequence()
-    {
-        // 1. Останавливаем игру (физику)
-        Time.timeScale = 0f;
-
-        // 2. Играем звук и музыку поражения
-        SoundManager.Instance.PlayOneShot(SoundType.GameOver);
-        MusicManager.Instance.PlayGameOverMusic();
-
-        // 3. Показываем экран
-        if (uiManager != null) uiManager.ShowGameOver(true);
-
-        // 4. Ждем 3 секунды РЕАЛЬНОГО времени (игнорируя паузу)
-        yield return new WaitForSecondsRealtime(3f);
-
-        // 5. ВАЖНО: Возвращаем время в норму перед загрузкой!
-        Time.timeScale = 1f;
-
-        // 7. Грузим главное меню
-        SceneLoader.Instance.LoadNextScene(GameScene.MainMenu);
-    }
-    // ---------------------------------
-
     private void RespawnMainBall()
     {
         BallController newBall = ballPool.GetBall();
         newBall.ResetToPaddle();
     }
 
-    // (Остальные методы VictorySequence, LoadLevelRoutine, OnDestroy без изменений)
+    // ========================================================================
+    // --- ПОСЛЕДОВАТЕЛЬНОСТИ И ЗАГРУЗКА УРОВНЕЙ ---
+    // ========================================================================
+
+    private IEnumerator GameOverSequence()
+    {
+        Time.timeScale = 0f;
+        SoundManager.Instance.PlayOneShot(SoundType.GameOver);
+        MusicManager.Instance.PlayGameOverMusic();
+
+        // СТАРТ РЕФАКТОРИНГА: Вызов методов ScreenManager
+        if (screenManager != null) screenManager.ShowGameOver(true);
+        // КОНЕЦ РЕФАКТОРИНГА
+
+        yield return new WaitForSecondsRealtime(3f);
+        Time.timeScale = 1f;
+        SceneLoader.Instance.LoadNextScene(GameScene.MainMenu);
+    }
+
     private IEnumerator VictorySequence()
     {
         Debug.Log("VICTORY!");
         SoundManager.Instance.PlayOneShot(SoundType.LevelComplete);
         ballPool.ReturnAllBalls();
         powerUpPool.ReturnAllActive();
-        if (uiManager != null) uiManager.ShowVictory(true);
 
-        // Тут используем обычный wait, так как время не остановлено
+        // СТАРТ РЕФАКТОРИНГА: Вызов методов ScreenManager
+        if (screenManager != null) screenManager.ShowVictory(true);
+        // КОНЕЦ РЕФАКТОРИНГА
+
         yield return new WaitForSeconds(2f);
 
-        if (uiManager != null) uiManager.ShowVictory(false);
+        // СТАРТ РЕФАКТОРИНГА: Вызов методов ScreenManager
+        if (screenManager != null) screenManager.ShowVictory(false);
+        // КОНЕЦ РЕФАКТОРИНГА
+
         _currentLevel++;
         if (GameInstance.Instance != null) GameInstance.Instance.SetLevelData(_currentLevel);
-        if (uiManager != null) uiManager.UpdateLevel(_currentLevel);
+
         StartCoroutine(LoadLevelRoutine(_currentLevel, true));
     }
 
     private IEnumerator LoadLevelRoutine(int level, bool showTransition)
     {
-        if (showTransition && uiManager != null) uiManager.ShowLevelTransition($"Level {level}");
+        // СТАРТ РЕФАКТОРИНГА: Вызов методов ScreenManager
+        if (showTransition && screenManager != null) screenManager.ShowLevelTransition($"Level {level}");
+        // КОНЕЦ РЕФАКТОРИНГА
 
         if (GameInstance.Instance != null)
         {
@@ -207,24 +234,40 @@ public class GameManager : MonoBehaviour
             if (levelManager != null) levelManager.BuildChaosLevel();
         }
 
+        // СТАРТ РЕФАКТОРИНГА: Вызов методов HUD
+        if (hudView != null) hudView.UpdateLevel(_currentLevel);
+        // КОНЕЦ РЕФАКТОРИНГА
+
         ResetPowerUpLogic();
         RespawnMainBall();
-
-        // Если это первый запуск, можно запустить музыку геймплея
         MusicManager.Instance.PlayGameplayMusic();
 
         if (showTransition)
         {
             yield return new WaitForSeconds(2f);
-            if (uiManager != null) uiManager.HideLevelTransition();
+            // СТАРТ РЕФАКТОРИНГА: Вызов методов ScreenManager
+            if (screenManager != null) screenManager.HideLevelTransition();
+            // КОНЕЦ РЕФАКТОРИНГА
         }
+    }
+
+    private void HandlePowerUpPickup(int bonusPoints)
+    {
+        // 1. Звук
+        SoundManager.Instance.PlayOneShot(SoundType.PowerUpPickup);
+
+        // 2. Очки (и обновление HUD)
+        AddScore(bonusPoints);
+
+        // 3. Логика тройного мяча
+        ActivateTripleBall();
     }
 
     private void OnDestroy()
     {
         Brick.OnAnyBrickDestroyed -= HandleBrickDestroyed;
-        // На всякий случай возвращаем время при уничтожении, 
-        // чтобы при перезапуске сцены в редакторе игра не висела
+        PowerUp.OnPowerUpPickedUp -= HandlePowerUpPickup;
+        // На всякий случай возвращаем время при уничтожении
         Time.timeScale = 1f;
     }
 }

@@ -1,8 +1,14 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using System; // Нужно для Action
 
 public class PowerUp : MonoBehaviour
 {
+    // --- СОБЫТИЕ ---
+    // На это событие подпишется GameManager. 
+    // Передает int (количество очков).
+    public static event Action<int> OnPowerUpPickedUp;
+
     [Header("Настройки")]
     [SerializeField] private float fallSpeed = 3f;
     [SerializeField] private int bonusPoints = 100;
@@ -10,19 +16,16 @@ public class PowerUp : MonoBehaviour
     [Header("Анимация")]
     [SerializeField] private List<Sprite> animationFrames;
     [SerializeField] private float animationSpeed = 0.1f;
+    [SerializeField] public SpriteRenderer _sr;
 
-    [SerializeField]  public SpriteRenderer _sr;
     private int _currentFrame;
     private float _timer;
 
-    /// <summary>
-    /// Сбрасывает состояние при повторном использовании из пула
-    /// </summary>
     public void ResetState()
     {
         _currentFrame = 0;
         _timer = 0;
-        if (animationFrames.Count > 0)
+        if (animationFrames != null && animationFrames.Count > 0)
         {
             _sr.sprite = animationFrames[0];
         }
@@ -34,7 +37,7 @@ public class PowerUp : MonoBehaviour
         transform.Translate(Vector3.down * fallSpeed * Time.deltaTime);
 
         // 2. Анимация
-        if (animationFrames.Count > 0)
+        if (animationFrames != null && animationFrames.Count > 0)
         {
             _timer += Time.deltaTime;
             if (_timer >= animationSpeed)
@@ -48,7 +51,10 @@ public class PowerUp : MonoBehaviour
         // 3. Ушла за дно -> Возврат в пул
         if (transform.position.y < -10f)
         {
-            PowerUpPool.Instance.ReturnPowerUp(this);
+            if (PowerUpPool.Instance != null)
+                PowerUpPool.Instance.ReturnPowerUp(this);
+            else
+                gameObject.SetActive(false);
         }
     }
 
@@ -57,15 +63,17 @@ public class PowerUp : MonoBehaviour
         if (other.CompareTag("Paddle"))
         {
             ApplyBonus();
-            // Вместо Destroy -> Возврат в пул
-            PowerUpPool.Instance.ReturnPowerUp(this);
+            // Возврат в пул
+            if (PowerUpPool.Instance != null)
+                PowerUpPool.Instance.ReturnPowerUp(this);
+            else
+                gameObject.SetActive(false);
         }
     }
 
     private void ApplyBonus()
     {
-        SoundManager.Instance.PlayOneShot(SoundType.PowerUpPickup);
-        GameManager.Instance.AddScore(bonusPoints);
-        GameManager.Instance.ActivateTripleBall();
+        // ВМЕСТО ПРЯМЫХ ВЫЗОВОВ -> ВЫЗЫВАЕМ СОБЫТИЕ
+        OnPowerUpPickedUp?.Invoke(bonusPoints);
     }
 }

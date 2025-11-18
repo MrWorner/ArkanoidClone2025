@@ -51,40 +51,43 @@ public class FitCameraToCorners : MonoBehaviour
     [Button]
     public void SetCameraInstant()
     {
-        // --- НОВАЯ ЛОГИКА РАСЧЕТА ---
-
-        // 1. Получаем позиции наших "якорей"
         Vector3 tl_pos = _topLeftCorner.position;
         Vector3 dr_pos = _bottomRightCorner.position;
-
-        // 2. Получаем соотношение сторон экрана (ширина / высота)
         float aspectRatio = _cam.aspect;
 
-        // 3. Вычисляем ШИРИНУ мира, которую мы хотим видеть
-        // (от левого края до правого)
-        float worldWidth = dr_pos.x - tl_pos.x;
+        // --- 1. Требуемая Ширина и Высота в мире ---
+        float requiredWorldWidth = dr_pos.x - tl_pos.x;
+        float requiredWorldHeight = tl_pos.y - dr_pos.y; // Высота = Верхний Y - Нижний Y (14.976 - 0.000 = 14.976)
 
-        // 4. Вычисляем ОРТО-РАЗМЕР
-        // Орто-размер = (ШиринаМира / СоотношениеСторон) / 2
-        // Это ГАРАНТИРУЕТ, что в экран влезет 
-        // ровно от tl_pos.x до dr_pos.x
-        float newOrthoSize = worldWidth / aspectRatio / 2f;
+        // --- 2. Ортографический размер, необходимый для ФИКСАЦИИ ШИРИНЫ ---
+        float orthoSizeForWidth = (requiredWorldWidth / aspectRatio) / 2f;
 
-        // 5. Вычисляем ПОЗИЦИЮ камеры
+        // --- 3. Ортографический размер, необходимый для ФИКСАЦИИ ВЫСОТЫ ---
+        float orthoSizeForHeight = requiredWorldHeight / 2f; // Орто-размер - это половина высоты
 
-        // Камера должна быть по центру между левым и правым краем
-        float newCamPosX = (tl_pos.x + dr_pos.x) / 2f;
+        // --- 4. Принцип "Fit-or-Expand": Выбираем БОЛЬШИЙ размер ---
+        // Чтобы гарантированно увидеть ВСЕ точки, мы должны выбрать МАКСИМАЛЬНЫЙ размер.
+        // Это гарантирует, что ни одна точка не будет обрезана.
+        float finalOrthoSize = Mathf.Max(orthoSizeForWidth, orthoSizeForHeight);
 
-        // Камера должна быть СМЕЩЕНА ВНИЗ от верхнего края
-        // ровно на свой (новый) орто-размер
-        float newCamPosY = tl_pos.y - newOrthoSize;
+        // --- 5. Вычисляем Позицию Камеры (X, Y) ---
+        float newCamPosX = (tl_pos.x + dr_pos.x) / 2f; // Центр по X (остается прежним)
 
-        // 6. ПРИМЕНЯЕМ МГНОВЕННО
+        // Центр по Y должен быть ровно посередине между TL.y и DR.y
+        float newCamPosY = (tl_pos.y + dr_pos.y) / 2f;
+
+        // ПРИМЕЧАНИЕ: Если вы хотите, чтобы верхний край всегда был ТОЧНО по tl_pos.y,
+        // используйте: newCamPosY = tl_pos.y - finalOrthoSize; 
+        // НО ЭТО СНОВА СДВИНЕТ НИЖНЮЮ ГРАНИЦУ! 
+        // Поэтому используем центр:
+        // float newCamPosY = tl_pos.y - finalOrthoSize;
+
+        // --- 6. ПРИМЕНЯЕМ ---
         _cam.transform.position = new Vector3(
             newCamPosX,
-            newCamPosY,
+            newCamPosY, // (14.976 + 0.000) / 2 = 7.488
             _cam.transform.position.z
         );
-        _cam.orthographicSize = newOrthoSize;
+        _cam.orthographicSize = finalOrthoSize;
     }
 }
