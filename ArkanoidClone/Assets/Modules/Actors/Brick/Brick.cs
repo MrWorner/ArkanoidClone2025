@@ -158,24 +158,26 @@ namespace MiniIT.BRICK
                 OnAnyBrickDestroyed.Invoke(transform.position);
             }
 
-            // --- ANIMATION MAGIC (DOTween) ---
-
-            // 1. Disable physics immediately
+       
             if (col != null)
             {
                 col.enabled = false;
             }
 
-            // 2. Create animation sequence
             Sequence seq = DOTween.Sequence();
 
-            // Scale down to 0 over 0.2 seconds (implosion effect)
-            seq.Append(transform.DOScale(Vector3.zero, 0.2f).SetEase(Ease.InBack));
+            seq.Append(transform.DOScale(Vector3.one * 1.2f, 0.05f).SetEase(Ease.OutQuad));
 
-            // Rotate slightly simultaneously
-            seq.Join(transform.DORotate(new Vector3(0, 0, 45), 0.2f));
+            seq.Append(transform.DOScale(Vector3.zero, 0.25f).SetEase(Ease.InBack));
 
-            // 3. Return to pool upon completion
+            float randomZ = UnityEngine.Random.Range(-180f, 180f);
+            seq.Join(transform.DORotate(new Vector3(0, 0, randomZ), 0.25f, RotateMode.FastBeyond360));
+
+            if (spriteRenderer != null)
+            {
+                seq.Join(spriteRenderer.DOFade(0f, 0.2f));
+            }
+
             seq.OnComplete(() =>
             {
                 if (pool != null)
