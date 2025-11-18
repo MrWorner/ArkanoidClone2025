@@ -23,8 +23,17 @@ public class MainMenuPresenter : MonoBehaviour, IPresenter
     {
         _view.Hide(0.3f, () =>
         {
-            // После скрытия меню, показываем выбор уровня
-            _levelSelectPresenter.Show();
+            // Если _levelSelectPresenter пустой (null), тут ничего не произойдет
+            // и ошибок в консоли не будет (если нет проверки)
+            if (_levelSelectPresenter != null)
+            {
+                Debug.Log("Вызываю Show у выбора уровня"); // Добавьте этот лог
+                _levelSelectPresenter.Show();
+            }
+            else
+            {
+                Debug.LogError("ЗАБЫЛИ ПРИВЯЗАТЬ LevelSelectPresenter в Инспекторе!");
+            }
         });
     }
 

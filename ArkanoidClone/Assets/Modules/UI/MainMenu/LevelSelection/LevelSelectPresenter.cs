@@ -91,10 +91,12 @@ public class LevelSelectPresenter : MonoBehaviour, IPresenter
         var type = this.GetType();
         MethodInfo[] methods = type.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 
+        /*
         Debug.Log($"[Reflection] Methods in {type.Name}:");
         foreach (var method in methods)
         {
             Debug.Log($"- {method.Name}");
         }
+        */
     }
 }
