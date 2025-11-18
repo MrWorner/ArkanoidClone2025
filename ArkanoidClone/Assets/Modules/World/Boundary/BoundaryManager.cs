@@ -1,83 +1,71 @@
 ﻿using NaughtyAttributes;
 using UnityEngine;
 
-/// <summary>
-/// Размещает стены по краям экрана и растягивает их, 
-/// СОХРАНЯЯ настроенную в инспекторе толщину.
-/// 
-/// ТРЕБОВАНИЯ:
-/// 1. На стенах SpriteRenderer.DrawMode должен быть 'Sliced' или 'Tiled'.
-/// 2. На стенах BoxCollider2D.AutoTiling должен быть 'true'.
-/// </summary>
-public class BoundaryManager : MonoBehaviour
+namespace MiniIT.LEVELS
 {
-    [Header("Ссылки на СПРАЙТЫ стен")]
-    [Tooltip("Ссылка на SpriteRenderer левой стены")]
-    [SerializeField] private SpriteRenderer leftWall;
-
-    [Tooltip("Ссылка на SpriteRenderer правой стены")]
-    [SerializeField] private SpriteRenderer rightWall;
-
-    /*
-    [Tooltip("Ссылка на SpriteRenderer верхней стены")]
-    [SerializeField] private SpriteRenderer topWall;
-
-    [Tooltip("Ссылка на SpriteRenderer нижней стены")]
-    [SerializeField] private SpriteRenderer bottomWall;
-    */
-
-    void Start()
+    /// <summary>
+    /// Positions side walls at the screen edges and stretches them.
+    /// Requirements: SpriteRenderer.DrawMode = Sliced/Tiled, BoxCollider2D.AutoTiling = true.
+    /// </summary>
+    public class BoundaryManager : MonoBehaviour
     {
-        Execute();
-    }
+        // ========================================================================
+        // --- SERIALIZED FIELDS ---
+        // ========================================================================
 
-    [Button]
-    public void Execute()
-    {
-        Camera mainCamera = Camera.main;
+        [BoxGroup("WALLS")]
+        [Tooltip("Reference to the Left Wall SpriteRenderer.")]
+        [SerializeField, Required]
+        private SpriteRenderer leftWall = null;
 
-        // --- Получаем размеры экрана в игровых юнитах ---
-        float screenHeight = mainCamera.orthographicSize * 2;
-        // (camera.aspect = ширина / высота)
-        float screenWidth = screenHeight * mainCamera.aspect;
+        [BoxGroup("WALLS")]
+        [Tooltip("Reference to the Right Wall SpriteRenderer.")]
+        [SerializeField, Required]
+        private SpriteRenderer rightWall = null;
 
-        // Получаем Z-координату (глубину) для позиционирования
-        // (10f - это "глубже" камеры. Замените, если нужно)
-        float zPos = 10f;
+        // ========================================================================
+        // --- PUBLIC METHODS ---
+        // ========================================================================
 
-        // --- 1. Позиционируем стены по краям ---
-        // (Используем .transform, т.к. ссылка у нас на SpriteRenderer)
+        [Button("Execute Positioning")]
+        public void Execute()
+        {
+            Camera mainCamera = Camera.main;
 
-        // (0, 0.5) - центр левой границы экрана
-        leftWall.transform.position = mainCamera.ViewportToWorldPoint(new Vector3(0, 0.5f, zPos));
+            if (mainCamera == null || leftWall == null || rightWall == null)
+            {
+                return;
+            }
 
-        // (1, 0.5) - центр правой границы
-        rightWall.transform.position = mainCamera.ViewportToWorldPoint(new Vector3(1, 0.5f, zPos));
+            // --- Get screen dimensions in World Units ---
+            float screenHeight = mainCamera.orthographicSize * 2;
+            float screenWidth = screenHeight * mainCamera.aspect;
+            float zPos = 10f; // Depth
 
-        /*
-        // (0.5, 1) - центр верхней границы
-        topWall.transform.position = mainCamera.ViewportToWorldPoint(new Vector3(0.5f, 1, zPos));
+            // --- 1. Position walls at edges ---
 
-        // (0.5, 0) - центр нижней границы
-        bottomWall.transform.position = mainCamera.ViewportToWorldPoint(new Vector3(0.5f, 0, zPos));
-        */
+            // (0, 0.5) = Left Edge Center
+            leftWall.transform.position = mainCamera.ViewportToWorldPoint(new Vector3(0, 0.5f, zPos));
 
-        // --- 2. Растягиваем, СОХРАНЯЯ ТОЛЩИНУ ---
-        // Мы меняем .size у SpriteRenderer. 
-        // BoxCollider2D с 'Auto Tiling' = true подстроится АВТОМАТИЧЕСКИ.
+            // (1, 0.5) = Right Edge Center
+            rightWall.transform.position = mainCamera.ViewportToWorldPoint(new Vector3(1, 0.5f, zPos));
 
-        // Левая стена: Сохраняем X (толщину), меняем Y (длину)
-        leftWall.size = new Vector2(leftWall.size.x, screenHeight);
+            // --- 2. Stretch while preserving thickness ---
 
-        // Правая стена: Сохраняем X (толщину), меняем Y (длину)
-        rightWall.size = new Vector2(rightWall.size.x, screenHeight);
+            // Left Wall: Keep X (thickness), change Y (height)
+            leftWall.size = new Vector2(leftWall.size.x, screenHeight);
 
-        /*
-        // Верхняя стена: Сохраняем Y (толщину), меняем X (длину)
-        topWall.size = new Vector2(screenWidth, topWall.size.y);
+            // Right Wall: Keep X (thickness), change Y (height)
+            rightWall.size = new Vector2(rightWall.size.x, screenHeight);
+        }
 
-        // Нижняя стена: Сохраняем Y (толщину), меняем X (длину)
-        bottomWall.size = new Vector2(screenWidth, bottomWall.size.y);
-        */
+        // ========================================================================
+        // --- PRIVATE METHODS ---
+        // ========================================================================
+
+        private void Start()
+        {
+            Execute();
+        }
     }
 }

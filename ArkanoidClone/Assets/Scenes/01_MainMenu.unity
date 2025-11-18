@@ -198,10 +198,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: ScreenFader
       objectReference: {fileID: 0}
-    - target: {fileID: 103393604559208284, guid: f98a39e8110def44196f46aced4a8221, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 1880364864318299471, guid: f98a39e8110def44196f46aced4a8221, type: 3}
       propertyPath: m_RootOrder
       value: 11
@@ -685,7 +681,7 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 5945477301467669082, guid: 053a45fd3eaf96649bcce7d7827adc46, type: 3}
-      propertyPath: _mainMenuPresenter
+      propertyPath: mainMenuPresenter
       value: 
       objectReference: {fileID: 1362090039}
     - target: {fileID: 5945477301467669085, guid: 053a45fd3eaf96649bcce7d7827adc46, type: 3}
@@ -1045,7 +1041,7 @@ PrefabInstance:
       value: MainMenuUI
       objectReference: {fileID: 0}
     - target: {fileID: 8785424870319612649, guid: 80233b9346c97e84792c54b9ba34ab91, type: 3}
-      propertyPath: _levelSelectPresenter
+      propertyPath: levelSelectPresenter
       value: 
       objectReference: {fileID: 1855528413}
     - target: {fileID: 8785424870923239262, guid: 80233b9346c97e84792c54b9ba34ab91, type: 3}
