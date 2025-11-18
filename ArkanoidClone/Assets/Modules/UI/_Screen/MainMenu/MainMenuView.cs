@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using NaughtyAttributes;
 using System;
+using MiniIT.UI;
 
 public class MainMenuView : BaseView
 {

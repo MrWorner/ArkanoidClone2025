@@ -1556,8 +1556,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa6f83b6f2af4ba4b9b668eb76103a5d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _canvas: {fileID: 8785424869830904083}
-  _canvasGroup: {fileID: 8785424870319612647}
+  canvas: {fileID: 8785424869830904083}
+  canvasGroup: {fileID: 8785424870319612647}
   defaultFadeDuration: 0.3
   NewGameButton: {fileID: 8785424870241726646}
   QuitButton: {fileID: 8785424870923239261}

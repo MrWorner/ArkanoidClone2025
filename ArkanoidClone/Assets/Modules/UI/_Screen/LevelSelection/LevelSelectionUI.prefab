@@ -1808,8 +1808,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d565e2af16457c84a967369f1a990b11, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _canvas: {fileID: 5945477301033946605}
-  _canvasGroup: {fileID: 5945477301467669084}
+  canvas: {fileID: 5945477301033946605}
+  canvasGroup: {fileID: 5945477301467669084}
   defaultFadeDuration: 0.3
   _levelText: {fileID: 5945477300445881488}
   _btnBack: {fileID: 5945477300356894300}

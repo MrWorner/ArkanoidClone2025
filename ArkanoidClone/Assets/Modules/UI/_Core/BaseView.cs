@@ -3,98 +3,144 @@ using NaughtyAttributes;
 using System;
 using UnityEngine;
 
-public abstract class BaseView : MonoBehaviour, IAnimatedView
+namespace MiniIT.UI
 {
-    #region References
-    // ТРЕБОВАНИЕ: Назначаем руками в Инспекторе
-    [BoxGroup("Base References"), Required]
-    [SerializeField] private Canvas _canvas;
-
-    [BoxGroup("Base References"), Required]
-    [SerializeField] private CanvasGroup _canvasGroup;
-    #endregion
-
-    #region Settings
-    [BoxGroup("View Settings"), SerializeField] protected float defaultFadeDuration = 0.3f;
-    #endregion
-
-    // Свойство для проверки видимости
-    public bool IsVisible => _canvas != null && _canvas.enabled && _canvasGroup.alpha > 0;
-
-    protected virtual void Awake()
+    /// <summary>
+    /// Base abstract class for all UI Views with DOTween animations.
+    /// </summary>
+    public abstract class BaseView : MonoBehaviour, IAnimatedView
     {
-        // При старте сразу приводим в скрытое состояние (без анимации)
-        ForceHide();
-    }
+        // ========================================================================
+        // --- PROPERTIES ---
+        // ========================================================================
 
-    #region IView (Без параметров)
-
-    [Button("Show Default")]
-    public void Show() => Show(defaultFadeDuration);
-
-    [Button("Hide Default")]
-    public void Hide() => Hide(defaultFadeDuration);
-
-    #endregion
-
-    #region IAnimatedView (С параметрами)
-
-    public void Show(float duration, Action onComplete = null)
-    {
-        // ИСПРАВЛЕНИЕ:
-        // Мы включаем сам GameObject, на котором висит Canvas.
-        // Это сработает, даже если Canvas - это дочерний объект, который был выключен.
-        if (_canvas != null)
+        public bool IsVisible
         {
-            _canvas.gameObject.SetActive(true); // Включаем объект
-            _canvas.enabled = true;             // Включаем компонент (на всякий случай)
+            get
+            {
+                return canvas != null && canvas.enabled && canvasGroup.alpha > 0;
+            }
         }
 
-        _canvasGroup.DOKill();
-        _canvasGroup.interactable = true;
-        _canvasGroup.blocksRaycasts = true;
+        // ========================================================================
+        // --- SERIALIZED FIELDS ---
+        // ========================================================================
 
-        // Если альфа уже 1 (например, после быстрого переключения), сбрасываем в 0
-        if (_canvasGroup.alpha >= 0.99f) _canvasGroup.alpha = 0f;
+        [BoxGroup("REFERENCES")]
+        [Tooltip("Requirement: Assign manually in Inspector.")]
+        [SerializeField, Required]
+        private Canvas canvas = null;
 
-        _canvasGroup.DOFade(1f, duration).OnComplete(() => onComplete?.Invoke());
-    }
+        [BoxGroup("REFERENCES")]
+        [Tooltip("Requirement: Assign manually in Inspector.")]
+        [SerializeField, Required]
+        private CanvasGroup canvasGroup = null;
 
-    public void Hide(float duration, Action onComplete = null)
-    {
-        _canvasGroup.DOKill();
-        _canvasGroup.interactable = false;
-        _canvasGroup.blocksRaycasts = false;
+        [BoxGroup("SETTINGS")]
+        [SerializeField]
+        protected float defaultFadeDuration = 0.3f;
 
-        _canvasGroup.DOFade(0f, duration).OnComplete(() =>
+        // ========================================================================
+        // --- PUBLIC METHODS ---
+        // ========================================================================
+
+        [Button("Show Default")]
+        public void Show()
         {
-            // ИСПРАВЛЕНИЕ:
-            // Выключаем GameObject целиком, чтобы гарантированно убрать отрисовку
-            if (_canvas != null)
-                _canvas.gameObject.SetActive(false);
-
-            onComplete?.Invoke();
-        });
-    }
-
-    #endregion
-
-    #region Helpers
-
-    // Метод для мгновенного скрытия при старте (без событий)
-    private void ForceHide()
-    {
-        if (_canvasGroup != null)
-        {
-            _canvasGroup.DOKill();
-            _canvasGroup.alpha = 0f;
-            _canvasGroup.interactable = false;
-            _canvasGroup.blocksRaycasts = false;
+            Show(defaultFadeDuration);
         }
 
-        if (_canvas != null)
-            _canvas.enabled = false;
-    }
+        [Button("Hide Default")]
+        public void Hide()
+        {
+            Hide(defaultFadeDuration);
+        }
 
-    #endregion
+        public void Show(float duration, Action onComplete = null)
+        {
+            // FIX: We enable the GameObject itself where the Canvas resides.
+            // This ensures it works even if the Canvas is on a disabled child object.
+            if (canvas != null)
+            {
+                canvas.gameObject.SetActive(true);
+                canvas.enabled = true;
+            }
+
+            if (canvasGroup != null)
+            {
+                canvasGroup.DOKill();
+                canvasGroup.interactable = true;
+                canvasGroup.blocksRaycasts = true;
+
+                // If alpha is already 1 (e.g., after quick toggle), reset to 0 for effect
+                if (canvasGroup.alpha >= 0.99f)
+                {
+                    canvasGroup.alpha = 0f;
+                }
+
+                canvasGroup.DOFade(1f, duration).OnComplete(() =>
+                {
+                    if (onComplete != null)
+                    {
+                        onComplete.Invoke();
+                    }
+                });
+            }
+        }
+
+        public void Hide(float duration, Action onComplete = null)
+        {
+            if (canvasGroup != null)
+            {
+                canvasGroup.DOKill();
+                canvasGroup.interactable = false;
+                canvasGroup.blocksRaycasts = false;
+
+                canvasGroup.DOFade(0f, duration).OnComplete(() =>
+                {
+                    // FIX: Disable the entire GameObject to guarantee no rendering cost
+                    if (canvas != null)
+                    {
+                        canvas.gameObject.SetActive(false);
+                    }
+
+                    if (onComplete != null)
+                    {
+                        onComplete.Invoke();
+                    }
+                });
+            }
+        }
+
+        // ========================================================================
+        // --- PROTECTED & PRIVATE METHODS ---
+        // ========================================================================
+
+        protected virtual void Awake()
+        {
+            // Force hide immediately on startup (no animation)
+            ForceHide();
+        }
+
+        /// <summary>
+        /// Instantly hides the view without events or animations.
+        /// </summary>
+        private void ForceHide()
+        {
+            if (canvasGroup != null)
+            {
+                canvasGroup.DOKill();
+                canvasGroup.alpha = 0f;
+                canvasGroup.interactable = false;
+                canvasGroup.blocksRaycasts = false;
+            }
+
+            if (canvas != null)
+            {
+                canvas.enabled = false;
+                // Also good practice to ensure GO is inactive if that's the logic
+                canvas.gameObject.SetActive(false);
+            }
+        }
+    }
 }

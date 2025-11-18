@@ -1,6 +1,11 @@
-
-public interface IPresenter
+namespace MiniIT.UI
 {
-    void Initialize();
-    void Dispose();
+    /// <summary>
+    /// Base contract for UI Presenters.
+    /// </summary>
+    public interface IPresenter
+    {
+        void Initialize();
+        void Dispose();
+    }
 }

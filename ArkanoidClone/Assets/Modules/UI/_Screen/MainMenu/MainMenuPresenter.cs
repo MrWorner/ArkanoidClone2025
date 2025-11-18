@@ -3,6 +3,7 @@ using UnityEditor; // Нужно для остановки игры в реда�
 using NaughtyAttributes;
 using MiniIT.LEVELS;
 using MiniIT.AUDIO;
+using MiniIT.UI;
 
 public class MainMenuPresenter : MonoBehaviour, IPresenter
 {

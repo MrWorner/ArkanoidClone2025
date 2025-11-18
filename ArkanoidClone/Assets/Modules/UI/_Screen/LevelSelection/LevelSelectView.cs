@@ -1,4 +1,5 @@
 ﻿using DG.Tweening;
+using MiniIT.UI;
 using NaughtyAttributes;
 using System;
 using TMPro;

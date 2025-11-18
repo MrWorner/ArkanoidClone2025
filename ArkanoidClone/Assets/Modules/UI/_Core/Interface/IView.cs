@@ -1,9 +1,12 @@
-﻿using System;
-
-// Базовые интерфейсы (как вы и просили)
-public interface IView
+﻿namespace MiniIT.UI
 {
-    void Show();
-    void Hide();
-    bool IsVisible { get; }
+    /// <summary>
+    /// Basic contract for any view element.
+    /// </summary>
+    public interface IView
+    {
+        bool IsVisible { get; }
+        void Show();
+        void Hide();
+    }
 }

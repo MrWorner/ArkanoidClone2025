@@ -1,24 +1,43 @@
-﻿using UnityEngine;
+﻿using MiniIT.BRICK;
+using MiniIT.CORE;
+using NaughtyAttributes;
 using System.Collections.Generic;
 using System.Linq;
-using MiniIT.BRICK;
+using UnityEngine;
 
-[CreateAssetMenu(fileName = "BrickTextMap", menuName = "Arkanoid/Generation/Brick Text Map")]
-public class BrickTextMapSO : ScriptableObject
+namespace MiniIT.LEVELS
 {
-    [System.Serializable]
-    public struct CharToBrickMapping
+    [CreateAssetMenu(fileName = "BrickTextMap", menuName = "Arkanoid/Generation/Brick Text Map")]
+    public class BrickTextMapSO : ScriptableObject
     {
-        public char symbol;
-        public BrickTypeSO brickType;
-    }
+        [System.Serializable]
+        public struct CharToBrickMapping
+        {
+            public char symbol;
+            public BrickTypeSO brickType;
+        }
 
-    public List<CharToBrickMapping> mappings;
+        // ========================================================================
+        // --- SERIALIZED FIELDS ---
+        // ========================================================================
 
-    public BrickTypeSO GetBrickType(char symbol)
-    {
-        var map = mappings.FirstOrDefault(m => m.symbol == symbol);
-        // Если символ не найден (или это пробел/пустота), вернем null
-        return map.brickType;
+        [BoxGroup("MAPPINGS")]
+        [ReorderableList]
+        [SerializeField]
+        public List<CharToBrickMapping> mappings;
+
+        // ========================================================================
+        // --- PUBLIC METHODS ---
+        // ========================================================================
+
+        /// <summary>
+        /// Finds the BrickType associated with the specific character symbol.
+        /// </summary>
+        public BrickTypeSO GetBrickType(char symbol)
+        {
+            CharToBrickMapping map = mappings.FirstOrDefault(m => m.symbol == symbol);
+            // If symbol not found (or it is whitespace), returns null
+            return map.brickType;
+        }
     }
 }

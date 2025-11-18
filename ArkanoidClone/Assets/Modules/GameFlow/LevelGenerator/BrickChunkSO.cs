@@ -1,18 +1,38 @@
-﻿using UnityEngine;
+﻿using MiniIT.BRICK;
+using MiniIT.CORE;
+using NaughtyAttributes;
 using System.Collections.Generic;
-using MiniIT.BRICK;
+using UnityEngine;
 
-[CreateAssetMenu(fileName = "NewBrickChunk", menuName = "Arkanoid/Generation/Brick Chunk")]
-public class BrickChunkSO : ScriptableObject
+namespace MiniIT.LEVELS
 {
-    [System.Serializable]
-    public struct BrickData
+    [CreateAssetMenu(fileName = "NewBrickChunk", menuName = "Arkanoid/Generation/Brick Chunk")]
+    public class BrickChunkSO : ScriptableObject
     {
-        public Vector2Int position; // Локальная позиция внутри чанка (0..5, 0..5)
-        public BrickTypeSO type;
-    }
+        [System.Serializable]
+        public struct BrickData
+        {
+            [Tooltip("Local position within the chunk (0..5, 0..5).")]
+            public Vector2Int position;
 
-    public int width = 6;
-    public int height = 6;
-    public List<BrickData> bricks = new List<BrickData>();
+            [Tooltip("The type of brick at this position.")]
+            public BrickTypeSO type;
+        }
+
+        // ========================================================================
+        // --- SERIALIZED FIELDS ---
+        // ========================================================================
+
+        [BoxGroup("SETTINGS")]
+        [SerializeField]
+        public int width = 6;
+
+        [BoxGroup("SETTINGS")]
+        [SerializeField]
+        public int height = 6;
+
+        [BoxGroup("DATA")]
+        [SerializeField]
+        public List<BrickData> bricks = new List<BrickData>();
+    }
 }
