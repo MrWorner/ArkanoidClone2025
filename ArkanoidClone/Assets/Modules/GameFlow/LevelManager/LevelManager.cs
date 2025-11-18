@@ -196,7 +196,7 @@ public class LevelManager : MonoBehaviour
             bool flipY = GetPRNG().NextDouble() > 0.5;
 
             // ЛОГ 4: Детальная инфа по каждому квадранту
-            Debug.Log($"<color=orange>[Quad {i}]</color> Chunk: <b>{chunk.name}</b> | FlipX: <color=yellow>{flipX}</color> | FlipY: <color=yellow>{flipY}</color>");
+            //Debug.Log($"<color=orange>[Quad {i}]</color> Chunk: <b>{chunk.name}</b> | FlipX: <color=yellow>{flipX}</color> | FlipY: <color=yellow>{flipY}</color>");
 
             SpawnQuadrant(chunk, offset.x, offset.y, flipX, flipY, startPos);
         }

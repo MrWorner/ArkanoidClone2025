@@ -54,7 +54,17 @@ public class GameManager : MonoBehaviour
     {
         CurrentLives = startLives;
         CurrentScore = 0;
-        _currentLevel = 1;
+
+        // --- ИСПРАВЛЕНИЕ #1: Берем уровень из GameInstance ---
+        if (GameInstance.Instance != null)
+        {
+            _currentLevel = GameInstance.Instance.SelectedLevelIndex;
+        }
+        else
+        {
+            _currentLevel = 1; // Фолбэк, если запустили сцену без меню
+        }
+        // -----------------------------------------------------
 
         uiManager.UpdateLives(CurrentLives);
         uiManager.UpdateScore(CurrentScore);
@@ -62,7 +72,6 @@ public class GameManager : MonoBehaviour
 
         ResetPowerUpLogic();
 
-        // Первый запуск - сразу грузим уровень (без победы)
         StartCoroutine(LoadLevelRoutine(_currentLevel, false));
     }
 
@@ -79,7 +88,6 @@ public class GameManager : MonoBehaviour
         if (uiManager != null) uiManager.UpdateScore(CurrentScore);
     }
 
-    // --- ИСПРАВЛЕНИЕ #1: Гарантия скорости ---
     public void ActivateTripleBall()
     {
         List<BallController> activeBalls = ballPool.GetActiveBalls();
@@ -90,18 +98,13 @@ public class GameManager : MonoBehaviour
         {
             if (sourceBall == null || !sourceBall.gameObject.activeSelf) continue;
 
-            // 1. Берем текущую скорость
             Vector2 currentVelocity = sourceBall.GetComponent<Rigidbody2D>().velocity;
-
-            // 2. Если мяч вдруг замедлился, берем "стандартную" скорость (7f)
-            // Это гарантирует, что клоны вылетят бодро.
             float speed = currentVelocity.magnitude;
-            if (speed < 5f) speed = 7f; // Минимальный порог
+            if (speed < 5f) speed = 7f;
 
             Vector2 direction = currentVelocity.normalized;
             Vector3 position = sourceBall.transform.position;
 
-            // 3. Создаем векторы, умножая НАПРАВЛЕНИЕ на СКОРОСТЬ
             Vector2 dir1 = (Quaternion.Euler(0, 0, -20) * direction) * speed;
             Vector2 dir2 = (Quaternion.Euler(0, 0, 20) * direction) * speed;
 
@@ -109,7 +112,6 @@ public class GameManager : MonoBehaviour
             ballPool.GetBall().SpawnAsClone(position, dir2);
         }
     }
-    // ----------------------------------------
 
     public void HandleBallLost(BallController ball)
     {
@@ -125,14 +127,11 @@ public class GameManager : MonoBehaviour
     {
         _activeBrickCount--;
 
-        // --- ИСПРАВЛЕНИЕ #2: Победная последовательность ---
         if (_activeBrickCount <= 0)
         {
-            // Запускаем победную корутину вместо мгновенной загрузки
             StartCoroutine(VictorySequence());
             return;
         }
-        // ------------------------------------------------
 
         _bricksDestroyedCounter++;
         if (_bricksDestroyedCounter >= _currentPowerUpThreshold)
@@ -174,36 +173,37 @@ public class GameManager : MonoBehaviour
         newBall.ResetToPaddle();
     }
 
-    // --- НОВАЯ ПОБЕДНАЯ КОРУТИНА ---
     private IEnumerator VictorySequence()
     {
         Debug.Log("VICTORY!");
-
-        // 1. Сразу убираем все мячи и бонусы
         ballPool.ReturnAllBalls();
         powerUpPool.ReturnAllActive();
 
-        // 2. Показываем надпись VICTORY
-        // (Старые кирпичи всё еще на экране, как вы просили!)
         if (uiManager != null)
         {
             uiManager.ShowVictory(true);
         }
 
-        // 3. Ждем 2 секунды, пока игрок радуется
         yield return new WaitForSeconds(2f);
 
-        // 4. Скрываем Victory
         if (uiManager != null)
         {
             uiManager.ShowVictory(false);
         }
 
-        // 5. Повышаем уровень
+        // 5. Повышаем уровень локально
         _currentLevel++;
+
+        // --- ИСПРАВЛЕНИЕ #2: Обновляем GameInstance для нового Seed ---
+        if (GameInstance.Instance != null)
+        {
+            // Это важно! Это пересчитает Seed для следующего уровня
+            GameInstance.Instance.SetLevelData(_currentLevel);
+        }
+        // --------------------------------------------------------------
+
         if (uiManager != null) uiManager.UpdateLevel(_currentLevel);
 
-        // 6. Запускаем стандартную загрузку нового уровня
         StartCoroutine(LoadLevelRoutine(_currentLevel, true));
     }
 
@@ -216,8 +216,8 @@ public class GameManager : MonoBehaviour
 
         if (GameInstance.Instance != null)
         {
+            // Теперь здесь будет НОВЫЙ Seed, так как мы обновили его в VictorySequence
             int levelSeed = GameInstance.Instance.CurrentLevelSeed;
-
             if (levelManager != null)
             {
                 levelManager.GenerateLevelBySeed(levelSeed);
@@ -231,13 +231,9 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        // Сброс бонусов
         ResetPowerUpLogic();
-
-        // 3. Спавним мяч (он ждет на ракетке под черным экраном)
         RespawnMainBall();
 
-        // 4. Ждем 2 секунды
         if (showTransition)
         {
             yield return new WaitForSeconds(2f);

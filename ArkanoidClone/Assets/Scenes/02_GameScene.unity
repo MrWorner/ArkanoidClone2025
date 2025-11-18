@@ -582,6 +582,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 9049856953552123500}
     - target: {fileID: 4527935324743154748, guid: 7fe4eb077c4c6ad4b8335bfbb581f801, type: 3}
+      propertyPath: startLives
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4527935324743154748, guid: 7fe4eb077c4c6ad4b8335bfbb581f801, type: 3}
       propertyPath: powerUpPool
       value: 
       objectReference: {fileID: 1075799701}
@@ -658,6 +662,10 @@ PrefabInstance:
       propertyPath: uiElement
       value: 
       objectReference: {fileID: 1875217063}
+    - target: {fileID: 887001425593700995, guid: 8414a4dcfbedd234ab023830a2ef68e4, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4062857119808838887, guid: 8414a4dcfbedd234ab023830a2ef68e4, type: 3}
       propertyPath: m_RootOrder
       value: 7
@@ -1401,22 +1409,6 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 978312892956351180, guid: da02eeb2f88b7ad4daec67706e492cde, type: 3}
-      propertyPath: m_fontAsset
-      value: 
-      objectReference: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-    - target: {fileID: 978312892956351180, guid: da02eeb2f88b7ad4daec67706e492cde, type: 3}
-      propertyPath: m_sharedMaterial
-      value: 
-      objectReference: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-    - target: {fileID: 1470637221862360852, guid: da02eeb2f88b7ad4daec67706e492cde, type: 3}
-      propertyPath: m_fontAsset
-      value: 
-      objectReference: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-    - target: {fileID: 1470637221862360852, guid: da02eeb2f88b7ad4daec67706e492cde, type: 3}
-      propertyPath: m_sharedMaterial
-      value: 
-      objectReference: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
     - target: {fileID: 5028204418387614323, guid: da02eeb2f88b7ad4daec67706e492cde, type: 3}
       propertyPath: m_RootOrder
       value: 12
@@ -1461,42 +1453,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5719514072349564781, guid: da02eeb2f88b7ad4daec67706e492cde, type: 3}
-      propertyPath: m_SizeDelta.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5719514072349564781, guid: da02eeb2f88b7ad4daec67706e492cde, type: 3}
-      propertyPath: m_SizeDelta.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6144535990406177123, guid: da02eeb2f88b7ad4daec67706e492cde, type: 3}
-      propertyPath: m_SizeDelta.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6144535990406177123, guid: da02eeb2f88b7ad4daec67706e492cde, type: 3}
-      propertyPath: m_SizeDelta.y
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 7815617023009235262, guid: da02eeb2f88b7ad4daec67706e492cde, type: 3}
       propertyPath: m_Name
       value: UIManager
       objectReference: {fileID: 0}
-    - target: {fileID: 7954783632736258370, guid: da02eeb2f88b7ad4daec67706e492cde, type: 3}
-      propertyPath: m_SizeDelta.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7954783632736258370, guid: da02eeb2f88b7ad4daec67706e492cde, type: 3}
-      propertyPath: m_SizeDelta.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8721921377921630259, guid: da02eeb2f88b7ad4daec67706e492cde, type: 3}
-      propertyPath: m_fontAsset
-      value: 
-      objectReference: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-    - target: {fileID: 8721921377921630259, guid: da02eeb2f88b7ad4daec67706e492cde, type: 3}
-      propertyPath: m_sharedMaterial
-      value: 
-      objectReference: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: da02eeb2f88b7ad4daec67706e492cde, type: 3}
 --- !u!114 &9049856953552123500 stripped
