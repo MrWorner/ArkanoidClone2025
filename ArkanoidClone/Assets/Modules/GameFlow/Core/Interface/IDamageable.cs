@@ -1,11 +1,14 @@
-﻿/// <summary>
-/// Интерфейс для всего, что может получать урон (кирпичи, враги и т.д.)
-/// </summary>
-public interface IDamageable
+﻿namespace MiniIT.CORE
 {
     /// <summary>
-    /// Метод для получения урона
+    /// Interface for any object that can take damage (Bricks, Enemies, etc.).
     /// </summary>
-    /// <param name="damageAmount">Количество урона</param>
-    void TakeDamage(int damageAmount);
+    public interface IDamageable
+    {
+        /// <summary>
+        /// Applies damage to the object.
+        /// </summary>
+        /// <param name="damageAmount">The amount of damage to apply.</param>
+        void TakeDamage(int damageAmount);
+    }
 }

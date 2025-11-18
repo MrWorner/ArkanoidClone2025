@@ -1,43 +1,91 @@
 ﻿using UnityEngine;
 using NaughtyAttributes;
 
-public class GameInstance : MonoBehaviour
+namespace MiniIT.CORE
 {
-    public static GameInstance Instance { get; private set; }
-
-    [BoxGroup("Settings")]
-    [Tooltip("Измените это число, чтобы полностью поменять генерацию всех уровней игры")]
-    public int MasterSeed = 777;
-
-    [BoxGroup("Data"), ReadOnly]
-    public int SelectedLevelIndex = 1;
-
-    [BoxGroup("Data"), ReadOnly]
-    public int CurrentLevelSeed = 0;
-
-    private void Awake()
+    public class GameInstance : MonoBehaviour
     {
-        if (Instance != null && Instance != this)
+        // ========================================================================
+        // --- PROPERTIES ---
+        // ========================================================================
+
+        public static GameInstance Instance
         {
-            Destroy(gameObject);
-            return;
+            get;
+            private set;
         }
-        Instance = this;
-        DontDestroyOnLoad(gameObject);
 
-        // --- ИСПРАВЛЕНИЕ: ---
-        // Принудительно рассчитываем Seed для стартового уровня (Level 1),
-        // иначе он останется 0 до первого нажатия кнопки.
-        SetLevelData(SelectedLevelIndex);
-    }
+        // ========================================================================
+        // --- SERIALIZED FIELDS ---
+        // ========================================================================
 
-    public void SetLevelData(int levelIndex)
-    {
-        SelectedLevelIndex = Mathf.Clamp(levelIndex, 1, 9999);
+        [BoxGroup("SETTINGS")]
+        [Tooltip("Change this number to completely alter the generation of all game levels.")]
+        [SerializeField]
+        private int masterSeed = 777;
 
-        unchecked
+        [BoxGroup("DATA")]
+        [ReadOnly]
+        [SerializeField]
+        private int selectedLevelIndex = 1;
+
+        [BoxGroup("DATA")]
+        [ReadOnly]
+        [SerializeField]
+        private int currentLevelSeed = 0;
+
+        // ========================================================================
+        // --- PUBLIC PROPERTIES ACCESSORS ---
+        // ========================================================================
+
+        public int SelectedLevelIndex
         {
-            CurrentLevelSeed = (SelectedLevelIndex * 1234567) + MasterSeed;
+            get
+            {
+                return selectedLevelIndex;
+            }
+        }
+
+        public int CurrentLevelSeed
+        {
+            get
+            {
+                return currentLevelSeed;
+            }
+        }
+
+        // ========================================================================
+        // --- PUBLIC METHODS ---
+        // ========================================================================
+
+        public void SetLevelData(int levelIndex)
+        {
+            selectedLevelIndex = Mathf.Clamp(levelIndex, 1, 9999);
+
+            unchecked
+            {
+                currentLevelSeed = (selectedLevelIndex * 1234567) + masterSeed;
+            }
+        }
+
+        // ========================================================================
+        // --- PRIVATE METHODS ---
+        // ========================================================================
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+
+            // Force calculate Seed for the start level (Level 1),
+            // otherwise it will remain 0 until the first button press.
+            SetLevelData(selectedLevelIndex);
         }
     }
 }
