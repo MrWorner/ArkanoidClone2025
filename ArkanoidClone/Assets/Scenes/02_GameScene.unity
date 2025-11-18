@@ -1623,10 +1623,6 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 4195467802208957523, guid: 1eb7ad7719cdcbf42820e45af3992caf, type: 3}
-      propertyPath: orthographic size
-      value: 8.55111
-      objectReference: {fileID: 0}
     - target: {fileID: 5112595167014169106, guid: 1eb7ad7719cdcbf42820e45af3992caf, type: 3}
       propertyPath: m_Name
       value: "\u2605 Main Camera"
@@ -1676,15 +1672,11 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7822041801064835645, guid: 1eb7ad7719cdcbf42820e45af3992caf, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7822041801064835645, guid: 1eb7ad7719cdcbf42820e45af3992caf, type: 3}
-      propertyPath: _topLeftCorner
+      propertyPath: topLeftCorner
       value: 
       objectReference: {fileID: 1133439727}
     - target: {fileID: 7822041801064835645, guid: 1eb7ad7719cdcbf42820e45af3992caf, type: 3}
-      propertyPath: _bottomRightCorner
+      propertyPath: bottomRightCorner
       value: 
       objectReference: {fileID: 74192240}
     m_RemovedComponents: []

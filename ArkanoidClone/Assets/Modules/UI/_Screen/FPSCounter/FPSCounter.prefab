@@ -350,6 +350,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4dae14ca6ba7f4242ad25cd0566c6074, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FPSCounter
-  _fpsText: {fileID: 5533740070724339477}
-  _updateInterval: 0.5
-  _ColoredDebug: 0
+  fpsText: {fileID: 5533740070724339477}
+  updateInterval: 0.5
