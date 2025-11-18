@@ -152,13 +152,24 @@ public class GameManager : MonoBehaviour
     private void HandleBrickDestroyed(Vector3 brickPos)
     {
         _activeBrickCount--;
-        // Проверка на победу теперь внутри SetBrickCount, но оставим здесь на случай, если логика другая
-        // if (_activeBrickCount <= 0) { StartCoroutine(VictorySequence()); return; } 
+        Debug.Log($"Осталось кирпичей: {_activeBrickCount}");
+
+        // --- ВОТ ЭТОГО НЕ ХВАТАЛО ---
+        // Проверяем, не закончились ли кирпичи прямо сейчас
+        if (_activeBrickCount <= 0)
+        {
+            StartCoroutine(VictorySequence());
+            return; // Выходим, чтобы не спавнить бонус, если уровень уже пройден
+        }
+        // -----------------------------
 
         _bricksDestroyedCounter++;
         if (_bricksDestroyedCounter >= _currentPowerUpThreshold)
         {
-            powerUpPool.GetPowerUp(brickPos);
+            if (powerUpPool != null)
+            {
+                powerUpPool.GetPowerUp(brickPos);
+            }
             _bricksDestroyedCounter = 0;
             _currentPowerUpThreshold += powerUpStepIncrement;
         }
