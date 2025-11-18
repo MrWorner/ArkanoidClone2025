@@ -1,20 +1,13 @@
 ﻿using UnityEngine;
-using System.Reflection;
 using NaughtyAttributes;
 
 public class LevelSelectPresenter : MonoBehaviour, IPresenter
 {
-    [BoxGroup("Dependencies"), Required, SerializeField] private LevelSelectView _view;
-    // Ссылка на Главное меню, чтобы вернуться назад
-    [BoxGroup("Dependencies"), Required, SerializeField] private MainMenuPresenter _mainMenuPresenter;
-    [BoxGroup("Dependencies"), Required, SerializeField] private GameObject _brickPool;
+    [BoxGroup("Dependencies"), Required]
+    [SerializeField] private LevelSelectView _view;
 
-    private LevelSelectionModel _model;
-
-    private void Awake()
-    {
-        _brickPool.SetActive(false);
-    }
+    [BoxGroup("Dependencies"), Required]
+    [SerializeField] private MainMenuPresenter _mainMenuPresenter;
 
     private void Start()
     {
@@ -23,98 +16,67 @@ public class LevelSelectPresenter : MonoBehaviour, IPresenter
 
     public void Initialize()
     {
-
-        _model = new LevelSelectionModel();
-
-        // ДЕМОНСТРАЦИЯ: Проверка на null через паттер matching
-        if (_view is null)
-        {
-            Debug.LogError("View is not assigned!");
-            return;
-        }
-
-        // Подписка на события View
-        _view.OnBackClicked += HandleBack;
-        _view.OnStartClicked += HandleStart;
+        // Подписка на кнопки навигации
         _view.OnNextClicked += () => ChangeLevel(1);
         _view.OnPrevClicked += () => ChangeLevel(-1);
         _view.OnNextBigClicked += () => ChangeLevel(10);
         _view.OnPrevBigClicked += () => ChangeLevel(-10);
 
-        // Инициализация отображения
-        _view.UpdateView(_model.CurrentLevel);
-
-        // Для демонстрации Reflection (как просили в ТЗ)
-        LogMethodNamesViaReflection();
+        _view.OnBackClicked += OnBackClicked;
+        _view.OnStartClicked += OnStartClicked;
     }
 
     public void Show()
     {
         _view.Show();
-        _brickPool.SetActive(true);
-    }
 
-    public void Hide()
-    {
-        _brickPool.SetActive(false);
-        _view.Hide();
+        // 1. При открытии экрана выбора уровня - ВКЛЮЧАЕМ видимость кирпичей
+        LevelManager.Instance.SetLevelVisibility(true);
+
+        // 2. Генерируем уровень который сейчас сохранен в GameInstance
+        RefreshLevelGeneration();
     }
-    #region Logic Handlers
 
     private void ChangeLevel(int amount)
     {
-        _model.SetLevel(_model.CurrentLevel + amount);
-        _view.UpdateView(_model.CurrentLevel);
+        // 1. Берем текущий уровень
+        int current = GameInstance.Instance.SelectedLevelIndex;
+
+        // 2. Меняем и сохраняем в GameInstance (он там внутри сам посчитает Seed)
+        GameInstance.Instance.SetLevelData(current + amount);
+
+        // 3. Обновляем UI и Генерируем мир
+        RefreshLevelGeneration();
     }
 
-    private void HandleStart()
+    private void RefreshLevelGeneration()
     {
-        // Сохраняем выбранный уровень (например, в PlayerPrefs или глобальный менеджер)
-        PlayerPrefs.SetInt("SelectedLevel", _model.CurrentLevel);
-        PlayerPrefs.Save();
+        // Обновляем текст во View
+        _view.UpdateView(GameInstance.Instance.SelectedLevelIndex);
 
-        // Используем ваш SceneLoader
-        SceneLoader.Instance.LoadNextScene(GameScene.GameScene);
+        // Запускаем генерацию уровня по Seed
+        LevelManager.Instance.GenerateLevelBySeed(GameInstance.Instance.CurrentLevelSeed);
     }
 
-    private void HandleBack()
+    private void OnBackClicked()
     {
         _view.Hide(0.3f, () =>
         {
-            // Логика возврата в главное меню
+            // 1. При выходе назад - ВЫКЛЮЧАЕМ видимость кирпичей
+            LevelManager.Instance.SetLevelVisibility(false);
 
-            _brickPool.SetActive(false);
-
+            // 2. Показываем главное меню
             if (_mainMenuPresenter != null)
                 _mainMenuPresenter.Show();
         });
     }
 
-    public void Dispose()
+    private void OnStartClicked()
     {
-        // Хорошим тоном является отписка от событий
-        if (_view != null)
-        {
-            _view.OnBackClicked -= HandleBack;
-            _view.OnStartClicked -= HandleStart;
-            // ... остальные отписки
-        }
+        // Загрузка сцены игры...
+        SceneLoader.Instance.LoadNextScene(GameScene.GameScene);
     }
-    #endregion
 
-    // ДЕМОНСТРАЦИЯ: Reflection (Требование ТЗ)
-    [Button("Debug Reflection")]
-    private void LogMethodNamesViaReflection()
-    {
-        var type = this.GetType();
-        MethodInfo[] methods = type.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-
-        /*
-        Debug.Log($"[Reflection] Methods in {type.Name}:");
-        foreach (var method in methods)
-        {
-            Debug.Log($"- {method.Name}");
-        }
-        */
-    }
+    public void Hide() => _view.Hide();
+    public void Dispose() { }
 }

@@ -14,6 +14,12 @@ public class MainMenuPresenter : MonoBehaviour, IPresenter
     {
         Initialize();
         _view.Show();
+
+        // При старте игры в главном меню кирпичи не должны быть видны
+        if (LevelManager.Instance != null)
+        {
+            LevelManager.Instance.SetLevelVisibility(false);
+        }
     }
 
     public void Initialize()

@@ -3,13 +3,22 @@ using System.Collections.Generic;
 using System.Linq;
 using NaughtyAttributes;
 
-
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
 public class LevelManager : MonoBehaviour
 {
+    // Добавим Синглтон для удобства доступа из UI (как вы просили)
+    public static LevelManager Instance { get; private set; }
+
+    private void Awake()
+    {
+        // Простейшая инициализация синглтона
+        if (Instance == null) Instance = this;
+        else if (Instance != this) Destroy(gameObject);
+    }
+
     [Required] public BrickPool brickPool;
 
     [Header("Grid Settings")]
@@ -68,6 +77,41 @@ public class LevelManager : MonoBehaviour
     void Start() { }
 
     // ========================================================================
+    // NEW METHODS (REQUESTED)
+    // ========================================================================
+
+    /// <summary>
+    /// Генерирует уровень на основе Seed.
+    /// Инициализирует Random, поэтому результат всегда одинаковый для одного числа.
+    /// </summary>
+    public void GenerateLevelBySeed(int seed)
+    {
+        Debug.Log($"<b>[LevelManager]</b> Generating with Seed: {seed}");
+
+        // 1. Фиксируем рандом
+        Random.InitState(seed);
+
+        // 2. Строим уровень используя логику Хаоса (но теперь он детерминирован)
+        BuildChaosLevel();
+    }
+
+    /// <summary>
+    /// Управляет видимостью всех кирпичей.
+    /// Используется UI, чтобы скрыть уровень в Главном Меню.
+    /// </summary>
+    public void SetLevelVisibility(bool isVisible)
+    {
+        // Проходимся по сетке уже созданных кирпичей
+        foreach (var brick in _spawnedGrid)
+        {
+            if (brick != null)
+            {
+                brick.gameObject.SetActive(isVisible);
+            }
+        }
+    }
+
+    // ========================================================================
     // TOOLS
     // ========================================================================
 
@@ -88,10 +132,7 @@ public class LevelManager : MonoBehaviour
         // Принудительно ставим Хаос режим (чтобы каждый угол вертелся)
         symmetryMode = SymmetryType.Chaos;
 
-        // Случайное кол-во шаблонов (от 1 до 4)
-        //geometryTemplateCount = Random.Range(1, 5);
-        //obstacleTemplateCount = Random.Range(1, 3); // Для препятствий лучше 1-2, чтобы не перегружать
-
+        // Random.Range здесь будет зависеть от InitState, если вызвано через GenerateLevelBySeed
         var paintValues = System.Enum.GetValues(typeof(PaintPattern));
         paintPattern = (PaintPattern)paintValues.GetValue(Random.Range(0, paintValues.Length));
 
@@ -109,6 +150,7 @@ public class LevelManager : MonoBehaviour
         // Генерация
         if (symmetryMode == SymmetryType.Chaos)
         {
+            // Если вызвано из BuildChaosLevel, то это уже сделано, но для надежности оставим
             var paintValues = System.Enum.GetValues(typeof(PaintPattern));
             paintPattern = (PaintPattern)paintValues.GetValue(Random.Range(0, paintValues.Length));
 
@@ -130,14 +172,13 @@ public class LevelManager : MonoBehaviour
     }
 
     // ========================================================================
-    // GENERATION LOGIC
+    // GENERATION LOGIC (OLD FUNCTIONALITY PRESERVED)
     // ========================================================================
 
     // --- ВСПОМОГАТЕЛЬНЫЙ МЕТОД ДЛЯ РАСПРЕДЕЛЕНИЯ ШАБЛОНОВ ---
     private List<BrickChunkSO> GetDistributedTemplates(List<BrickChunkSO> sourceList, int count)
     {
         // 1. Перемешиваем исходный список и берем N уникальных
-        // (Если count > кол-ва доступных чанков, берем сколько есть)
         int safeCount = Mathf.Min(count, sourceList.Count);
         List<BrickChunkSO> uniqueSelection = sourceList.OrderBy(x => Random.value).Take(safeCount).ToList();
 
@@ -145,14 +186,12 @@ public class LevelManager : MonoBehaviour
         List<BrickChunkSO> finalDistribution = new List<BrickChunkSO>();
 
         // 3. Заполняем 4 слота, циклично проходясь по уникальным
-        // Пример: count=2 (A, B). Result: A, B, A, B.
-        // Пример: count=3 (A, B, C). Result: A, B, C, A.
         for (int i = 0; i < 4; i++)
         {
             finalDistribution.Add(uniqueSelection[i % uniqueSelection.Count]);
         }
 
-        // 4. Перемешиваем итоговый результат, чтобы порядок не был предсказуемым
+        // 4. Перемешиваем итоговый результат
         return finalDistribution.OrderBy(x => Random.value).ToList();
     }
     // ----------------------------------------------------------
@@ -166,7 +205,7 @@ public class LevelManager : MonoBehaviour
 
         // Логи
         string names = string.Join(", ", templates.Select(c => c.name).Distinct());
-        Debug.Log($"<b>[LevelGen]</b> Geo [{geometryTemplateCount}]: {names}");
+        // Debug.Log($"<b>[LevelGen]</b> Geo [{geometryTemplateCount}]: {names}");
 
         Vector2 currentCenter = transform.position;
         float totalW = COLS * brickWidth;
@@ -175,9 +214,6 @@ public class LevelManager : MonoBehaviour
 
         List<Vector2Int> quadrants = new List<Vector2Int>
         { new Vector2Int(0, 0), new Vector2Int(6, 0), new Vector2Int(0, 6), new Vector2Int(6, 6) };
-
-        // Перемешиваем порядок квадрантов, чтобы шаблоны ложились в случайные места
-        // (хотя templates уже перемешан, это двойная гарантия)
 
         for (int i = 0; i < 4; i++)
         {
@@ -194,19 +230,16 @@ public class LevelManager : MonoBehaviour
 
     private void OverlayObstaclesLayer()
     {
-        // Проверка галочки enableObstacles происходит в BuildLevel, здесь дублировать не обязательно, но можно
         if (obstacleChunks == null || obstacleChunks.Count == 0) return;
 
         List<BrickChunkSO> templates = GetDistributedTemplates(obstacleChunks, obstacleTemplateCount);
 
-        Debug.Log($"<b>[LevelGen]</b> Obs [{obstacleTemplateCount}]: {string.Join(", ", templates.Select(c => c.name).Distinct())}");
+        // Debug.Log($"<b>[LevelGen]</b> Obs [{obstacleTemplateCount}]: {string.Join(", ", templates.Select(c => c.name).Distinct())}");
 
-        // --- НУЖНО РАССЧИТАТЬ ПОЗИЦИЮ (как в Geometry) ---
         Vector2 currentCenter = transform.position;
         float totalW = COLS * brickWidth;
         float totalH = ROWS * brickHeight;
         Vector2 startPos = new Vector2(currentCenter.x - (totalW / 2f), currentCenter.y + (totalH / 2f));
-        // ------------------------------------------------
 
         List<Vector2Int> quadrants = new List<Vector2Int>
         { new Vector2Int(0, 0), new Vector2Int(6, 0), new Vector2Int(0, 6), new Vector2Int(6, 6) };
@@ -216,27 +249,22 @@ public class LevelManager : MonoBehaviour
             BrickChunkSO chunk = templates[i];
             Vector2Int offset = quadrants[i];
 
-            // В режиме Chaos - случайно, иначе можно фиксировано
-            // Для Obstacles часто лучше фиксировано, но оставим как есть для единообразия
             bool flipX = Random.value > 0.5f;
             bool flipY = Random.value > 0.5f;
 
-            // Передаем startPos в метод
             ApplyObstacleQuadrant(chunk, offset.x, offset.y, flipX, flipY, startPos);
         }
     }
 
-    // --- СТАРЫЕ МЕТОДЫ (Остаются для совместимости) ---
+    // --- СТАРЫЕ МЕТОДЫ ---
 
     private void GenerateSymmetricGeometry()
     {
-        // Тут логика старая: берем A и B и расставляем по правилам
         if (geometryChunks.Count == 0) return;
 
         BrickChunkSO chunkA = geometryChunks[Random.Range(0, geometryChunks.Count)];
         BrickChunkSO chunkB = geometryChunks[Random.Range(0, geometryChunks.Count)];
 
-        // Если пользователь выбрал Count=1, заставляем B быть равным A
         if (geometryTemplateCount == 1) chunkB = chunkA;
 
         BrickChunkSO[] quads = new BrickChunkSO[4];
@@ -255,9 +283,6 @@ public class LevelManager : MonoBehaviour
         SpawnQuadrant(quads[2], 0, 6, fx[2], fy[2], startPos);
         SpawnQuadrant(quads[3], 6, 6, fx[3], fy[3], startPos);
     }
-
-    // ... (Методы SpawnQuadrant, ApplyObstacleQuadrant, PaintBricksLayer, SetupSymmetry, ReportToGameManager, CleanupOldLevel, ValidateReferences) ...
-    // Они не меняются, просто скопируйте их.
 
     private void SpawnQuadrant(BrickChunkSO chunk, int offsetX, int offsetY, bool flipX, bool flipY, Vector2 startPos)
     {
@@ -295,25 +320,17 @@ public class LevelManager : MonoBehaviour
             {
                 Brick existingBrick = _spawnedGrid[col, row];
 
-                // ВАРИАНТ 1: Кирпич уже есть - меняем тип
                 if (existingBrick != null)
                 {
                     existingBrick.Setup(indestructibleType);
                 }
-                // ВАРИАНТ 2: Пустота - создаем новый (ЭТОГО НЕ БЫЛО)
                 else
                 {
                     Brick newBrick = Application.isPlaying ? brickPool.GetBrick() : brickPool.GetBrickEditor();
-
-                    // Настраиваем как неубиваемый
                     newBrick.Setup(indestructibleType);
-
-                    // Ставим на позицию
                     float xPos = startPos.x + (col * brickWidth);
                     float yPos = startPos.y - (row * brickHeight);
                     newBrick.transform.position = new Vector2(xPos, yPos);
-
-                    // Записываем в сетку
                     _spawnedGrid[col, row] = newBrick;
                 }
             }
@@ -359,14 +376,14 @@ public class LevelManager : MonoBehaviour
             case SymmetryType.MirrorVertical:
                 tmpl[0] = A; fx[0] = false; fy[0] = false;
                 tmpl[1] = B; fx[1] = false; fy[1] = false;
-                tmpl[2] = A; fx[2] = false; fy[2] = true; 
-                tmpl[3] = B; fx[3] = false; fy[3] = true; 
+                tmpl[2] = A; fx[2] = false; fy[2] = true;
+                tmpl[3] = B; fx[3] = false; fy[3] = true;
                 break;
             case SymmetryType.MirrorBoth:
                 tmpl[0] = A; fx[0] = false; fy[0] = false;
                 tmpl[1] = A; fx[1] = true; fy[1] = false;
                 tmpl[2] = A; fx[2] = false; fy[2] = true;
-                tmpl[3] = A; fx[3] = true; fy[3] = true; 
+                tmpl[3] = A; fx[3] = true; fy[3] = true;
                 break;
             case SymmetryType.Chaos: break;
         }

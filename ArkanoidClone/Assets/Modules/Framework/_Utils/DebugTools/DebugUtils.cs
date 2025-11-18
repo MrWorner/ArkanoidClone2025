@@ -22,10 +22,4 @@ public class DebugUtils
         Debug.LogError($"<color=red>ERROR! {className}: ActiveInstance уже задан!</color>", context);
         Debug.LogError($"<color=red>ERROR! {className}: ActiveInstance вот он!</color>", secondContext);
     }
-
-    public static void ShowMessage(string text)
-    {
-        DebugMessageSystemUI.Log(text);
-    }
-
 }
