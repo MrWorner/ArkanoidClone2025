@@ -3,6 +3,8 @@ using System.Linq;
 using System.Collections.Generic;
 using NaughtyAttributes;
 using MiniIT.CORE;
+using MiniIT.BRICK;
+
 
 
 #if UNITY_EDITOR

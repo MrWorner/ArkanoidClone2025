@@ -1,112 +1,191 @@
-﻿using UnityEngine;
-using System;
-using DG.Tweening;
+﻿using DG.Tweening;
+using MiniIT.BRICK;
 using MiniIT.CORE;
+using NaughtyAttributes;
+using System;
+using UnityEngine;
 
-public class Brick : MonoBehaviour, IDamageable
+namespace MiniIT.BRICK
 {
-    public static event Action<Vector3> OnAnyBrickDestroyed;
-
-    [SerializeField] private BrickTypeSO _brickType;
-    private BrickPool _pool;
-    private SpriteRenderer _spriteRenderer;
-    private Collider2D _collider; // Кешируем коллайдер
-    private int _currentHealth;
-    private bool _isDestroyed = false;
-
-    public BrickTypeSO BrickType { get => _brickType; }
-
-    void Awake()
+    public class Brick : MonoBehaviour, IDamageable
     {
-        _spriteRenderer = GetComponent<SpriteRenderer>();
-        _collider = GetComponent<Collider2D>();
-    }
+        public static event Action<Vector3> OnAnyBrickDestroyed;
 
-    public void Init(BrickPool ownerPool)
-    {
-        _pool = ownerPool;
-    }
+        // ========================================================================
+        // --- SERIALIZED FIELDS ---
+        // ========================================================================
 
-    public void Setup(BrickTypeSO type)
-    {
-        _brickType = type;
+        [BoxGroup("CONFIG")]
+        [SerializeField]
+        private BrickTypeSO brickType = null;
 
-        // --- СБРОС СОСТОЯНИЯ ДЛЯ ПУЛА (ВАЖНО!) ---
-        // Возвращаем нормальный размер и цвет, так как прошлая анимация их изменила
-        transform.localScale = Vector3.one;
-        transform.rotation = Quaternion.identity; // На всякий случай
+        // ========================================================================
+        // --- PROPERTIES ---
+        // ========================================================================
 
-        if (_spriteRenderer == null) _spriteRenderer = GetComponent<SpriteRenderer>();
-        if (_spriteRenderer != null)
+        public BrickTypeSO BrickType
         {
-            _spriteRenderer.color = _brickType != null ? _brickType.color : Color.white;
-            if (_brickType != null) _spriteRenderer.sprite = _brickType.sprite;
-            // Сбрасываем альфа-канал, если анимация его меняла
-            Color c = _spriteRenderer.color;
-            c.a = 1f;
-            _spriteRenderer.color = c;
+            get
+            {
+                return brickType;
+            }
         }
 
-        // Включаем коллайдер обратно
-        if (_collider == null) _collider = GetComponent<Collider2D>();
-        if (_collider != null) _collider.enabled = true;
-        // ------------------------------------------
+        // ========================================================================
+        // --- PRIVATE FIELDS ---
+        // ========================================================================
 
-        _currentHealth = _brickType != null ? _brickType.health : 1;
-        _isDestroyed = false;
-    }
+        private BrickPool pool = null;
+        private SpriteRenderer spriteRenderer = null;
+        private Collider2D col = null;
+        private int currentHealth = 0;
+        private bool isDestroyed = false;
 
-    public void TakeDamage(int damageAmount)
-    {
-        if (_isDestroyed || _brickType == null) return;
-        if (_brickType.isIndestructible)
+        // ========================================================================
+        // --- PUBLIC METHODS ---
+        // ========================================================================
+
+        /// <summary>
+        /// Initializes the brick with its owning pool.
+        /// </summary>
+        public void Init(BrickPool ownerPool)
         {
-            SoundManager.Instance.PlayOneShot(SoundType.IndestructibleHit);
-            // Бонус: Анимация "дрожания" для неубиваемого блока
-            transform.DOShakePosition(0.2f, 0.1f, 10, 90, false, true);
-            return;
+            pool = ownerPool;
         }
 
-        _currentHealth -= damageAmount;
+        /// <summary>
+        /// Sets up the brick with a specific type and resets visual state.
+        /// </summary>
+        public void Setup(BrickTypeSO type)
+        {
+            brickType = type;
 
-        if (_currentHealth <= 0)
+            // --- RESET POOL STATE ---
+            // Reset transform and rotation as previous animations might have altered them
+            transform.localScale = Vector3.one;
+            transform.rotation = Quaternion.identity;
+
+            if (spriteRenderer == null)
+            {
+                spriteRenderer = GetComponent<SpriteRenderer>();
+            }
+
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.color = brickType != null ? brickType.color : Color.white;
+
+                if (brickType != null)
+                {
+                    spriteRenderer.sprite = brickType.sprite;
+                }
+
+                // Reset alpha channel if animation changed it
+                Color c = spriteRenderer.color;
+                c.a = 1f;
+                spriteRenderer.color = c;
+            }
+
+            // Re-enable collider
+            if (col == null)
+            {
+                col = GetComponent<Collider2D>();
+            }
+
+            if (col != null)
+            {
+                col.enabled = true;
+            }
+
+            currentHealth = brickType != null ? brickType.health : 1;
+            isDestroyed = false;
+        }
+
+        /// <summary>
+        /// Applies damage to the brick and handles destruction logic/animation.
+        /// </summary>
+        public void TakeDamage(int damageAmount)
+        {
+            if (isDestroyed || brickType == null)
+            {
+                return;
+            }
+
+            if (brickType.isIndestructible)
+            {
+                SoundManager.Instance.PlayOneShot(SoundType.IndestructibleHit);
+                // Bonus: Shake animation for indestructible blocks
+                transform.DOShakePosition(0.2f, 0.1f, 10, 90, false, true);
+                return;
+            }
+
+            currentHealth -= damageAmount;
+
+            if (currentHealth <= 0)
+            {
+                PerformDestruction();
+            }
+            else
+            {
+                SoundManager.Instance.PlayOneShot(SoundType.BrickHit);
+                // Shake if hurt but not dead
+                transform.DOShakeScale(0.15f, 0.2f);
+            }
+        }
+
+        // ========================================================================
+        // --- PRIVATE METHODS ---
+        // ========================================================================
+
+        private void Awake()
+        {
+            spriteRenderer = GetComponent<SpriteRenderer>();
+            col = GetComponent<Collider2D>();
+        }
+
+        private void PerformDestruction()
         {
             SoundManager.Instance.PlayOneShot(SoundType.BrickDestroyed);
-            _isDestroyed = true;
+            isDestroyed = true;
 
             if (GameManager.Instance != null)
             {
-                GameManager.Instance.AddScore(_brickType.points);
+                GameManager.Instance.AddScore(brickType.points);
             }
 
-            OnAnyBrickDestroyed?.Invoke(transform.position);
+            if (OnAnyBrickDestroyed != null)
+            {
+                OnAnyBrickDestroyed.Invoke(transform.position);
+            }
 
             // --- ANIMATION MAGIC (DOTween) ---
 
-            // 1. Сразу отключаем физику, чтобы мяч пролетал сквозь
-            if (_collider != null) _collider.enabled = false;
+            // 1. Disable physics immediately
+            if (col != null)
+            {
+                col.enabled = false;
+            }
 
-            // 2. Создаем последовательность анимации
+            // 2. Create animation sequence
             Sequence seq = DOTween.Sequence();
 
-            // Уменьшаем до 0 за 0.2 секунды (эффект схлопывания)
+            // Scale down to 0 over 0.2 seconds (implosion effect)
             seq.Append(transform.DOScale(Vector3.zero, 0.2f).SetEase(Ease.InBack));
 
-            // Одновременно слегка вращаем
+            // Rotate slightly simultaneously
             seq.Join(transform.DORotate(new Vector3(0, 0, 45), 0.2f));
 
-            // 3. Когда анимация закончилась -> возвращаем в пул
-            seq.OnComplete(() => {
-                if (_pool != null) _pool.ReturnBrick(this);
-                else gameObject.SetActive(false);
+            // 3. Return to pool upon completion
+            seq.OnComplete(() =>
+            {
+                if (pool != null)
+                {
+                    pool.ReturnBrick(this);
+                }
+                else
+                {
+                    gameObject.SetActive(false);
+                }
             });
-            // ---------------------------------
-        }
-        else
-        {
-            SoundManager.Instance.PlayOneShot(SoundType.BrickHit);
-            // Если кирпич ранен, но не убит - тоже трясем
-            transform.DOShakeScale(0.15f, 0.2f);
         }
     }
 }

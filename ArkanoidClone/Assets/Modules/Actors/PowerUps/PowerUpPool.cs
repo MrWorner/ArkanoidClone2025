@@ -1,70 +1,110 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using NaughtyAttributes;
 
-public class PowerUpPool : MonoBehaviour
+namespace MiniIT.POWERUP
 {
-    public static PowerUpPool Instance { get; private set; }
-
-    [Header("Настройки")]
-    [SerializeField] private PowerUp powerUpPrefab;
-    [SerializeField] private int initialPoolSize = 5;
-
-    // Список всех созданных бонусов (и активных, и неактивных)
-    private List<PowerUp> _allPowerUps = new List<PowerUp>();
-
-    void Awake()
+    public class PowerUpPool : MonoBehaviour
     {
-        Instance = this;
-        // Создаем стартовый запас
-        for (int i = 0; i < initialPoolSize; i++)
+        // ========================================================================
+        // --- PROPERTIES ---
+        // ========================================================================
+
+        public static PowerUpPool Instance
         {
-            CreateNewPowerUp(false);
+            get;
+            private set;
         }
-    }
 
-    public PowerUp GetPowerUp(Vector3 position)
-    {
-        foreach (var p in _allPowerUps)
+        // ========================================================================
+        // --- SERIALIZED FIELDS ---
+        // ========================================================================
+
+        [BoxGroup("POOL SETTINGS")]
+        [Tooltip("Prefab to instantiate.")]
+        [SerializeField, Required]
+        private PowerUp powerUpPrefab = null;
+
+        [BoxGroup("POOL SETTINGS")]
+        [Tooltip("Number of items to create on Awake.")]
+        [SerializeField]
+        private int initialPoolSize = 5;
+
+        // ========================================================================
+        // --- PRIVATE FIELDS ---
+        // ========================================================================
+
+        private List<PowerUp> allPowerUps = new List<PowerUp>();
+
+        // ========================================================================
+        // --- PUBLIC METHODS ---
+        // ========================================================================
+
+        /// <summary>
+        /// Retrieves an inactive power-up from the pool or creates a new one.
+        /// </summary>
+        /// <param name="position">Spawn position.</param>
+        public PowerUp GetPowerUp(Vector3 position)
         {
-            if (!p.gameObject.activeSelf)
+            foreach (PowerUp p in allPowerUps)
             {
-                p.transform.position = position;
-                p.gameObject.SetActive(true);
-                p.ResetState(); // Сброс анимации и таймеров
-                return p;
+                if (!p.gameObject.activeSelf)
+                {
+                    p.transform.position = position;
+                    p.gameObject.SetActive(true);
+                    p.ResetState();
+                    return p;
+                }
+            }
+
+            // If no free objects, create a new one
+            PowerUp newP = CreateNewPowerUp(true);
+            newP.transform.position = position;
+            return newP;
+        }
+
+        /// <summary>
+        /// Returns the power-up to the pool (deactivates it).
+        /// </summary>
+        public void ReturnPowerUp(PowerUp p)
+        {
+            p.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// Deactivates all power-ups (used when changing levels).
+        /// </summary>
+        public void ReturnAllActive()
+        {
+            foreach (PowerUp p in allPowerUps)
+            {
+                if (p.gameObject.activeSelf)
+                {
+                    p.gameObject.SetActive(false);
+                }
             }
         }
 
-        // Если свободных нет - создаем новый
-        PowerUp newP = CreateNewPowerUp(true);
-        newP.transform.position = position;
-        return newP;
-    }
+        // ========================================================================
+        // --- PRIVATE METHODS ---
+        // ========================================================================
 
-    public void ReturnPowerUp(PowerUp p)
-    {
-        p.gameObject.SetActive(false);
-    }
-
-    /// <summary>
-    /// Убирает все бонусы со сцены (вызывается при смене уровня)
-    /// </summary>
-    public void ReturnAllActive()
-    {
-        foreach (var p in _allPowerUps)
+        private void Awake()
         {
-            if (p.gameObject.activeSelf)
+            Instance = this;
+
+            for (int i = 0; i < initialPoolSize; i++)
             {
-                p.gameObject.SetActive(false);
+                CreateNewPowerUp(false);
             }
         }
-    }
 
-    private PowerUp CreateNewPowerUp(bool isActive)
-    {
-        PowerUp newObj = Instantiate(powerUpPrefab, transform);
-        _allPowerUps.Add(newObj);
-        newObj.gameObject.SetActive(isActive);
-        return newObj;
+        private PowerUp CreateNewPowerUp(bool isActive)
+        {
+            PowerUp newObj = Instantiate(powerUpPrefab, transform);
+            allPowerUps.Add(newObj);
+            newObj.gameObject.SetActive(isActive);
+            return newObj;
+        }
     }
 }

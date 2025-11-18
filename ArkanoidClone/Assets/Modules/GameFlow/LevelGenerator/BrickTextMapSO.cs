@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using MiniIT.BRICK;
 
 [CreateAssetMenu(fileName = "BrickTextMap", menuName = "Arkanoid/Generation/Brick Text Map")]
 public class BrickTextMapSO : ScriptableObject

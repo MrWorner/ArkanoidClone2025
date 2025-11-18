@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using MiniIT.BRICK;
 
 [CreateAssetMenu(fileName = "NewBrickPalette", menuName = "Arkanoid/Generation/Brick Palette")]
 public class BrickPaletteSO : ScriptableObject

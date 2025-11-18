@@ -1,23 +1,42 @@
 ﻿using UnityEngine;
+using NaughtyAttributes;
 
-[CreateAssetMenu(fileName = "NewBrickType", menuName = "Arkanoid/Brick Type")]
-public class BrickTypeSO : ScriptableObject
+namespace MiniIT.BRICK
 {
-    [Header("Визуал")]
-    public Sprite sprite;
+    [CreateAssetMenu(fileName = "NewBrickType", menuName = "Arkanoid/Brick Type")]
+    public class BrickTypeSO : ScriptableObject
+    {
+        // ========================================================================
+        // --- VISUAL SETTINGS ---
+        // ========================================================================
 
-    // --- НОВОЕ ПОЛЕ ---
-    [Tooltip("Цвет (tint), в который будет окрашен спрайт")]
-    public Color color = Color.white; // По умолчанию - белый
-    // -------------------
+        [BoxGroup("VISUAL")]
+        [Tooltip("The sprite used for this brick.")]
+        [SerializeField]
+        public Sprite sprite;
 
-    [Header("Игровая логика")]
-    [Tooltip("Сколько очков дается за этот кирпич")]
-    public int points;
+        [BoxGroup("VISUAL")]
+        [Tooltip("Tint color for the sprite.")]
+        [SerializeField]
+        public Color color = Color.white;
 
-    [Tooltip("Неразрушаемый?")]
-    public bool isIndestructible;
+        // ========================================================================
+        // --- GAMEPLAY SETTINGS ---
+        // ========================================================================
 
-    [Tooltip("Сколько раз нужно ударить (1 = стандарт)")]
-    public int health = 1;
+        [BoxGroup("GAMEPLAY")]
+        [Tooltip("Score points awarded for destroying this brick.")]
+        [SerializeField]
+        public int points;
+
+        [BoxGroup("GAMEPLAY")]
+        [Tooltip("If true, the brick cannot be destroyed.")]
+        [SerializeField]
+        public bool isIndestructible;
+
+        [BoxGroup("GAMEPLAY")]
+        [Tooltip("Hit points required to destroy (Default = 1).")]
+        [SerializeField]
+        public int health = 1;
+    }
 }

@@ -1,79 +1,135 @@
-﻿using UnityEngine;
+﻿using MiniIT.POWERUP;
+using NaughtyAttributes;
+using System;
 using System.Collections.Generic;
-using System; // Нужно для Action
+using UnityEngine;
 
-public class PowerUp : MonoBehaviour
+namespace MiniIT.POWERUP
 {
-    // --- СОБЫТИЕ ---
-    // На это событие подпишется GameManager. 
-    // Передает int (количество очков).
-    public static event Action<int> OnPowerUpPickedUp;
-
-    [Header("Настройки")]
-    [SerializeField] private float fallSpeed = 3f;
-    [SerializeField] private int bonusPoints = 100;
-
-    [Header("Анимация")]
-    [SerializeField] private List<Sprite> animationFrames;
-    [SerializeField] private float animationSpeed = 0.1f;
-    [SerializeField] public SpriteRenderer _sr;
-
-    private int _currentFrame;
-    private float _timer;
-
-    public void ResetState()
+    public class PowerUp : MonoBehaviour
     {
-        _currentFrame = 0;
-        _timer = 0;
-        if (animationFrames != null && animationFrames.Count > 0)
-        {
-            _sr.sprite = animationFrames[0];
-        }
-    }
+        /// <summary>
+        /// Event triggered when picked up. Passes bonus points amount.
+        /// </summary>
+        public static event Action<int> OnPowerUpPickedUp;
 
-    void Update()
-    {
-        // 1. Падение
-        transform.Translate(Vector3.down * fallSpeed * Time.deltaTime);
+        // ========================================================================
+        // --- SERIALIZED FIELDS ---
+        // ========================================================================
 
-        // 2. Анимация
-        if (animationFrames != null && animationFrames.Count > 0)
+        [BoxGroup("SETTINGS")]
+        [SerializeField]
+        private float fallSpeed = 3f;
+
+        [BoxGroup("SETTINGS")]
+        [SerializeField]
+        private int bonusPoints = 100;
+
+        [BoxGroup("VISUALS")]
+        [Header("Animation")]
+        [SerializeField]
+        private List<Sprite> animationFrames = null;
+
+        [BoxGroup("VISUALS")]
+        [SerializeField]
+        private float animationSpeed = 0.1f;
+
+        [BoxGroup("VISUALS")]
+        [SerializeField, Required]
+        private SpriteRenderer spriteRenderer = null;
+
+        // ========================================================================
+        // --- PRIVATE FIELDS ---
+        // ========================================================================
+
+        private int currentFrame = 0;
+        private float timer = 0f;
+
+        // ========================================================================
+        // --- PUBLIC METHODS ---
+        // ========================================================================
+
+        /// <summary>
+        /// Resets the visual state and timers for pooling.
+        /// </summary>
+        public void ResetState()
         {
-            _timer += Time.deltaTime;
-            if (_timer >= animationSpeed)
+            currentFrame = 0;
+            timer = 0;
+
+            if (animationFrames != null && animationFrames.Count > 0)
             {
-                _timer = 0;
-                _currentFrame = (_currentFrame + 1) % animationFrames.Count;
-                _sr.sprite = animationFrames[_currentFrame];
+                if (spriteRenderer != null)
+                {
+                    spriteRenderer.sprite = animationFrames[0];
+                }
             }
         }
 
-        // 3. Ушла за дно -> Возврат в пул
-        if (transform.position.y < -10f)
-        {
-            if (PowerUpPool.Instance != null)
-                PowerUpPool.Instance.ReturnPowerUp(this);
-            else
-                gameObject.SetActive(false);
-        }
-    }
+        // ========================================================================
+        // --- PRIVATE METHODS ---
+        // ========================================================================
 
-    private void OnTriggerEnter2D(Collider2D other)
-    {
-        if (other.CompareTag("Paddle"))
+        private void Update()
         {
-            ApplyBonus();
-            // Возврат в пул
-            if (PowerUpPool.Instance != null)
-                PowerUpPool.Instance.ReturnPowerUp(this);
-            else
-                gameObject.SetActive(false);
-        }
-    }
+            // 1. Fall movement
+            transform.Translate(Vector3.down * fallSpeed * Time.deltaTime);
 
-    private void ApplyBonus()
-    {
-        // ВМЕСТО ПРЯМЫХ ВЫЗОВОВ -> ВЫЗЫВАЕМ СОБЫТИЕ
-        OnPowerUpPickedUp?.Invoke(bonusPoints);
+            // 2. Animation logic
+            if (animationFrames != null && animationFrames.Count > 0)
+            {
+                timer += Time.deltaTime;
+
+                if (timer >= animationSpeed)
+                {
+                    timer = 0;
+                    currentFrame = (currentFrame + 1) % animationFrames.Count;
+
+                    if (spriteRenderer != null)
+                    {
+                        spriteRenderer.sprite = animationFrames[currentFrame];
+                    }
+                }
+            }
+
+            // 3. Check if out of bounds (bottom) -> Return to pool
+            if (transform.position.y < -10f)
+            {
+                if (PowerUpPool.Instance != null)
+                {
+                    PowerUpPool.Instance.ReturnPowerUp(this);
+                }
+                else
+                {
+                    gameObject.SetActive(false);
+                }
+            }
+        }
+
+        private void OnTriggerEnter2D(Collider2D other)
+        {
+            if (other.CompareTag("Paddle"))
+            {
+                ApplyBonus();
+
+                // Return to pool
+                if (PowerUpPool.Instance != null)
+                {
+                    PowerUpPool.Instance.ReturnPowerUp(this);
+                }
+                else
+                {
+                    gameObject.SetActive(false);
+                }
+            }
+        }
+
+        private void ApplyBonus()
+        {
+            if (OnPowerUpPickedUp != null)
+            {
+                OnPowerUpPickedUp.Invoke(bonusPoints);
+            }
+        }
     }
 }

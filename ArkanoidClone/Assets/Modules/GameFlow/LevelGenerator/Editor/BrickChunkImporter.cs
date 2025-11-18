@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEditor;
 using System.IO;
 using System.Text.RegularExpressions;
+using MiniIT.BRICK;
 // Убрали using Sirenix...
 
 // Наследуемся от стандартного EditorWindow вместо OdinEditorWindow

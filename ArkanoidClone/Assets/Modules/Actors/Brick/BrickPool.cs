@@ -1,163 +1,201 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using NaughtyAttributes;
+using MiniIT.BRICK;
 
-// --- НОВОЕ: Подключаем Editor-инструменты ---
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-// ----------------------------------------
 
-public class BrickPool : MonoBehaviour
+namespace MiniIT.BRICK
 {
-    // --- Singleton (только для Runtime) ---
-    public static BrickPool Instance { get; private set; }
-    // ----------------------------------------
-
-    [Header("Настройки Пула")]
-    [Tooltip("Префаб кирпича, который мы будем создавать")]
-    [SerializeField] private Brick brickPrefab;
-
-    [Header("Состояние Пула (Запоминается)")]
-    [Tooltip("Список всех кирпичей, которыми управляет пул")]
-    [SerializeField] private List<Brick> _allManagedBricks = new List<Brick>();
-
-    // Геттер для LevelManager
-    public Brick BrickPrefab => brickPrefab;
-
-    void Awake()
+    public class BrickPool : MonoBehaviour
     {
-        if (Instance != null && Instance != this)
+        // ========================================================================
+        // --- PROPERTIES ---
+        // ========================================================================
+
+        public static BrickPool Instance
         {
-            Destroy(gameObject);
-            return;
+            get;
+            private set;
         }
-        Instance = this;
 
-        // ВАЖНО: При старте игры, "знакомим" все кирпичи 
-        foreach (Brick brick in _allManagedBricks)
+        public Brick BrickPrefab
         {
-            if (brick == null) continue; // Пропускаем, если ссылка "потерялась"
-            brick.Init(this);
-            brick.gameObject.SetActive(false); // Прячем все для старта
-        }
-    }
-
-    /// <summary>
-    /// (RUNTIME) Берет кирпич из пула
-    /// </summary>
-    public Brick GetBrick()
-    {
-        foreach (Brick brick in _allManagedBricks)
-        {
-            // Если кирпич был удален вручную в редакторе
-            if (brick == null) continue;
-
-            if (!brick.gameObject.activeSelf)
+            get
             {
-                brick.gameObject.SetActive(true);
-                return brick;
+                return brickPrefab;
             }
         }
-        // Если "спящих" не нашли - создаем новый
-        return CreateNewBrick(true);
-    }
 
-    /// <summary>
-    // (RUNTIME) Возвращает кирпич в пул
-    /// </summary>
-    public void ReturnBrick(Brick brick)
-    {
-        brick.gameObject.SetActive(false);
-    }
+        // ========================================================================
+        // --- SERIALIZED FIELDS ---
+        // ========================================================================
 
-    /// <summary>
-    /// (RUNTIME) Возвращает все активные кирпичи в пул
-    /// </summary>
-    public void ReturnAllActiveBricks()
-    {
-        foreach (Brick brick in _allManagedBricks)
+        [BoxGroup("POOL SETTINGS")]
+        [Tooltip("The brick prefab to spawn.")]
+        [SerializeField, Required]
+        private Brick brickPrefab = null;
+
+        [BoxGroup("STATE")]
+        [Tooltip("List of all bricks managed by this pool.")]
+        [SerializeField]
+        private List<Brick> allManagedBricks = new List<Brick>();
+
+        // ========================================================================
+        // --- PUBLIC METHODS ---
+        // ========================================================================
+
+        /// <summary>
+        /// (RUNTIME) Retrieves a brick from the pool or creates a new one.
+        /// </summary>
+        public Brick GetBrick()
         {
-            if (brick == null) continue;
-            if (brick.gameObject.activeSelf)
+            foreach (Brick brick in allManagedBricks)
             {
+                // If the brick was manually deleted in the editor
+                if (brick == null)
+                {
+                    continue;
+                }
+
+                if (!brick.gameObject.activeSelf)
+                {
+                    brick.gameObject.SetActive(true);
+                    return brick;
+                }
+            }
+
+            // If no "sleeping" bricks found, create a new one
+            return CreateNewBrick(true);
+        }
+
+        /// <summary>
+        /// (RUNTIME) Returns a brick to the pool (deactivates it).
+        /// </summary>
+        public void ReturnBrick(Brick brick)
+        {
+            brick.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// (RUNTIME) Deactivates all currently active bricks.
+        /// </summary>
+        public void ReturnAllActiveBricks()
+        {
+            foreach (Brick brick in allManagedBricks)
+            {
+                if (brick == null)
+                {
+                    continue;
+                }
+
+                if (brick.gameObject.activeSelf)
+                {
+                    brick.gameObject.SetActive(false);
+                }
+            }
+        }
+
+        // --- EDITOR METHODS ---
+
+        /// <summary>
+        /// (EDITOR) Creates a new brick using PrefabUtility and tracks it.
+        /// </summary>
+        public Brick GetBrickEditor()
+        {
+            return CreateNewBrick(false); // isRuntime = false
+        }
+
+        /// <summary>
+        /// (EDITOR) Destroys all bricks tracked by the pool.
+        /// </summary>
+        [Button("Clear Editor Bricks")]
+        public void DestroyAllBricksEditor()
+        {
+            // 1. Clear the tracking list
+            allManagedBricks.Clear();
+
+            // 2. "Nuclear" cleanup: Destroy all children.
+            // Using while loop because childCount changes during destruction.
+            while (transform.childCount > 0)
+            {
+                Transform child = transform.GetChild(0);
+                DestroyImmediate(child.gameObject);
+            }
+
+            Debug.Log("BrickPool: Editor cleanup complete.");
+        }
+
+        // ========================================================================
+        // --- PRIVATE METHODS ---
+        // ========================================================================
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            Instance = this;
+
+            // Initialize all existing bricks on startup
+            foreach (Brick brick in allManagedBricks)
+            {
+                if (brick == null)
+                {
+                    continue;
+                }
+
+                brick.Init(this);
                 brick.gameObject.SetActive(false);
             }
         }
-    }
 
-    // --- МЕТОДЫ ДЛЯ РЕДАКТОРА ---
-
-    /// <summary>
-    /// (EDITOR) Создает новый кирпич, "запоминает" его
-    /// </summary>
-    public Brick GetBrickEditor()
-    {
-        return CreateNewBrick(false); // isRuntime = false
-    }
-
-    /// <summary>
-    /// (EDITOR) Уничтожает все кирпичи, которые "запомнил" пул
-    /// </summary>
-    public void DestroyAllBricksEditor()
-    {
-        // 1. Сначала очищаем сам список (он нам больше не нужен для удаления)
-        _allManagedBricks.Clear();
-
-        // 2. "Ядерная чистка": Удаляем все дочерние объекты пула.
-        // Мы используем while, потому что childCount меняется при каждом удалении.
-        while (transform.childCount > 0)
+        /// <summary>
+        /// Internal method to instantiate a brick.
+        /// </summary>
+        private Brick CreateNewBrick(bool isRuntime)
         {
-            // Берем первого ребенка
-            Transform child = transform.GetChild(0);
+            if (brickPrefab == null)
+            {
+                Debug.LogError("BrickPool: Prefab is not assigned!");
+                return null;
+            }
 
-            // Уничтожаем его немедленно
-            DestroyImmediate(child.gameObject);
-        }
+            Brick newBrick = null;
 
-        Debug.Log("BrickPool: Очистка в редакторе завершена (по иерархии).");
-    }
-
-    /// <summary>
-    /// Внутренний метод для создания кирпича
-    /// </summary>
-    private Brick CreateNewBrick(bool isRuntime)
-    {
-        if (brickPrefab == null)
-        {
-            Debug.LogError("В BrickPool не назначен префаб!");
-            return null;
-        }
-
-        Brick newBrick;
-
-        // --- ГЛАВНОЕ ИЗМЕНЕНИЕ ---
-        if (isRuntime)
-        {
-            // В РЕЖИМЕ ИГРЫ: Используем Instantiate
-            newBrick = Instantiate(brickPrefab, transform);
-        }
-        else
-        {
-            // В РЕДАКТОРЕ: Используем PrefabUtility
+            if (isRuntime)
+            {
+                // RUNTIME: Use standard Instantiate
+                newBrick = Instantiate(brickPrefab, transform);
+            }
+            else
+            {
+                // EDITOR: Use PrefabUtility
 #if UNITY_EDITOR
-            newBrick = (Brick)PrefabUtility.InstantiatePrefab(brickPrefab, transform);
+                newBrick = (Brick)PrefabUtility.InstantiatePrefab(brickPrefab, transform);
 #else
-                // Запасной вариант (не должен вызываться)
+                // Fallback
                 newBrick = Instantiate(brickPrefab, transform);
 #endif
+            }
+
+            // General Setup
+            newBrick.gameObject.name = "Brick_" + allManagedBricks.Count;
+            newBrick.Init(this);
+            allManagedBricks.Add(newBrick);
+
+            if (isRuntime)
+            {
+                newBrick.gameObject.SetActive(true);
+            }
+
+            return newBrick;
         }
-        // -------------------------
-
-        // Общая настройка
-        newBrick.gameObject.name = "Brick_" + _allManagedBricks.Count;
-        newBrick.Init(this); // Знакомим с пулом
-        _allManagedBricks.Add(newBrick); // "Запоминаем"
-
-        if (isRuntime)
-        {
-            newBrick.gameObject.SetActive(true); // Активируем, если в игре
-        }
-
-        return newBrick;
     }
 }

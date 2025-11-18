@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using MiniIT.BRICK;
 
 [CreateAssetMenu(fileName = "NewBrickChunk", menuName = "Arkanoid/Generation/Brick Chunk")]
 public class BrickChunkSO : ScriptableObject
