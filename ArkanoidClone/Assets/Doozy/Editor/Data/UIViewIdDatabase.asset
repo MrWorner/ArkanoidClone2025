@@ -13,4 +13,10 @@ MonoBehaviour:
   m_Name: UIViewIdDatabase
   m_EditorClassIdentifier: 
   Database:
-    Items: []
+    Items:
+    - Category: MainMenuLevel
+      Name: ChooseLevelView
+    - Category: MainMenuLevel
+      Name: MainMenuView
+    - Category: None
+      Name: None

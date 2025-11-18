@@ -13,4 +13,10 @@ MonoBehaviour:
   m_Name: UIButtonIdDatabase
   m_EditorClassIdentifier: 
   Database:
-    Items: []
+    Items:
+    - Category: MainMenuLevel
+      Name: Back
+    - Category: MainMenuLevel
+      Name: NewGame
+    - Category: None
+      Name: None
