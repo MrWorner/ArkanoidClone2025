@@ -46,6 +46,7 @@ public class AnchorToBottom : MonoBehaviour
             BallController ball = other.GetComponent<BallController>();
             if (ball != null)
             {
+                SoundManager.Instance.PlayOneShot(SoundType.BallLost);
                 GameManager.Instance.HandleBallLost(ball);
             }
         }

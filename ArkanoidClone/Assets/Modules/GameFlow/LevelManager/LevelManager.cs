@@ -104,7 +104,7 @@ public class LevelManager : MonoBehaviour
         geometryChunks = LoadAssets<BrickChunkSO>(geometryPath);
         obstacleChunks = LoadAssets<BrickChunkSO>(obstaclesPath);
         EditorUtility.SetDirty(this);
-        Debug.Log($"[LevelManager] Loaded {geometryChunks.Count} Geometry & {obstacleChunks.Count} Obstacles.");
+        //Debug.Log($"[LevelManager] Loaded {geometryChunks.Count} Geometry & {obstacleChunks.Count} Obstacles.");
 #endif
     }
 
@@ -127,7 +127,7 @@ public class LevelManager : MonoBehaviour
             paintPattern = (PaintPattern)paintValues.GetValue(GetPRNG().Next(0, paintValues.Length));
 
             // ЛОГ 2: Выбранный паттерн
-            Debug.Log($"<color=cyan>[LevelGen]</color> PaintPattern: <color=white>{paintPattern}</color>");
+            //Debug.Log($"<color=cyan>[LevelGen]</color> PaintPattern: <color=white>{paintPattern}</color>");
 
             GenerateChaosGeometry();
         }
@@ -144,7 +144,7 @@ public class LevelManager : MonoBehaviour
         }
 
         ReportToGameManager();
-        Debug.Log($"<color=cyan><b>[LevelGen FINISH]</b></color>");
+        //Debug.Log($"<color=cyan><b>[LevelGen FINISH]</b></color>");
     }
 
     // ========================================================================

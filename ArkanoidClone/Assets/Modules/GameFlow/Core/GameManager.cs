@@ -181,6 +181,7 @@ public class GameManager : MonoBehaviour
     private IEnumerator VictorySequence()
     {
         Debug.Log("VICTORY!");
+        SoundManager.Instance.PlayOneShot(SoundType.LevelComplete);
         ballPool.ReturnAllBalls();
         powerUpPool.ReturnAllActive();
         if (uiManager != null) uiManager.ShowVictory(true);

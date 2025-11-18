@@ -157,10 +157,20 @@ public class BallController : MonoBehaviour
             CalculateRebound(collision);
             return;
         }
+
+        if (collision.gameObject.CompareTag("Wall"))
+        {
+            SoundManager.Instance.PlayOneShot(SoundType.WallHit);
+        }
+
         if (collision.gameObject.TryGetComponent(out IDamageable damageable))
         {
+            SoundManager.Instance.PlayOneShot(SoundType.WallHit);
             damageable.TakeDamage(1);
+            return;
         }
+
+        
     }
 
     private void CalculateRebound(Collision2D collision)
