@@ -27,7 +27,8 @@ public enum SoundType
     PowerUpPickup,  // Взятие бонуса
     LifeLost,       // Потеря жизни
     LevelComplete,  // Победа
-    GameOver        // Поражение
+    GameOver,        // Поражение
+    ButtonClickStart,
 }
 
 [System.Serializable]
@@ -66,12 +67,15 @@ public class SoundManager : MonoBehaviour
     {
         if (_instance != null)
         {
+            ColoredDebug.CLog(gameObject, "<color=orange>[SYSTEM]</color> Найден дубликат SoundManager. Удаляю: <color=yellow>{0}</color>", _ColoredDebug, gameObject.name);
             Destroy(gameObject); // Если менеджер уже есть, удаляем этот объект
             return;
         }
 
         _instance = this;
         DontDestroyOnLoad(gameObject); // Чтобы музыка не прерывалась при смене сцен
+
+        ColoredDebug.CLog(gameObject, "<color=cyan>[INFO]</color> Инициализация SoundManager...", _ColoredDebug);
         InitAudioSources();
     }
     #endregion Методы UNITY
@@ -82,19 +86,36 @@ public class SoundManager : MonoBehaviour
     /// </summary>
     public void PlayOneShot(SoundType type)
     {
-        if (type == SoundType.None) return;
+        ColoredDebug.CLog(gameObject, "<color=lime>[ACTION]</color> Запрос на проигрывание звука: <color=yellow>{0}</color>", _ColoredDebug, type);
+
+        if (type == SoundType.None)
+        {
+            ColoredDebug.CLog(gameObject, "<color=grey>[DEBUG]</color> Тип звука 'None', пропускаем.", _ColoredDebug);
+            return;
+        }
 
         SoundEffect effect = _soundEffects.FirstOrDefault(e => e.type == type);
 
-        if (effect == null || effect.clips == null || effect.clips.Length == 0)
+        if (effect == null)
         {
-            // Можно раскомментировать для отладки, если забыли назначить звук
-            // Debug.LogWarning($"SoundManager: Звук {type} не назначен!");
+            ColoredDebug.CLog(gameObject, "<color=red>[ERROR]</color> Звуковой эффект <color=yellow>{0}</color> не найден в списке настроек!", _ColoredDebug, type);
+            return;
+        }
+
+        if (effect.clips == null || effect.clips.Length == 0)
+        {
+            ColoredDebug.CLog(gameObject, "<color=red>[ERROR]</color> Для эффекта <color=yellow>{0}</color> не назначены аудиоклипы!", _ColoredDebug, type);
             return;
         }
 
         // Выбираем случайный клип (вариативность)
         AudioClip clip = effect.clips[Random.Range(0, effect.clips.Length)];
+
+        if (clip == null)
+        {
+            ColoredDebug.CLog(gameObject, "<color=red>[ERROR]</color> Один из клипов для <color=yellow>{0}</color> пустой (null)!", _ColoredDebug, type);
+            return;
+        }
 
         // Берем свободный источник
         AudioSource source = GetAvailableOneShotSource();
@@ -103,7 +124,15 @@ public class SoundManager : MonoBehaviour
         {
             // Расчет питча (опционально можно добавить вариативность pitch)
             source.pitch = 1f;
-            source.PlayOneShot(clip, _sfxVolume * effect.volumeMultiplier);
+            float finalVolume = _sfxVolume * effect.volumeMultiplier;
+
+            ColoredDebug.CLog(gameObject, "<color=cyan>[INFO]</color> Проигрываю клип: <color=white>{0}</color>. Громкость: <color=yellow>{1}</color>", _ColoredDebug, clip.name, finalVolume);
+
+            source.PlayOneShot(clip, finalVolume);
+        }
+        else
+        {
+            ColoredDebug.CLog(gameObject, "<color=red>[ERROR]</color> Не удалось получить AudioSource для проигрывания!", _ColoredDebug);
         }
     }
     #endregion Публичные методы
@@ -116,6 +145,7 @@ public class SoundManager : MonoBehaviour
         {
             CreateSource();
         }
+        ColoredDebug.CLog(gameObject, "<color=orange>[SYSTEM]</color> Создан пул аудио источников. Размер: <color=yellow>{0}</color>", _ColoredDebug, _oneShotPoolSize);
     }
 
     private AudioSource CreateSource()
@@ -137,6 +167,7 @@ public class SoundManager : MonoBehaviour
             }
         }
 
+        ColoredDebug.CLog(gameObject, "<color=orange>[SYSTEM]</color> Все источники заняты. Расширяю пул (+1).", _ColoredDebug);
         // Если все заняты - создаем новый (расширяем пул)
         return CreateSource();
     }

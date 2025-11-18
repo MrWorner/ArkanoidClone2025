@@ -39,6 +39,8 @@ public class LevelSelectPresenter : MonoBehaviour, IPresenter
 
     private void ChangeLevel(int amount)
     {
+        SoundManager.Instance.PlayOneShot(SoundType.ButtonClick);
+
         // 1. Берем текущий уровень
         int current = GameInstance.Instance.SelectedLevelIndex;
 
@@ -60,6 +62,8 @@ public class LevelSelectPresenter : MonoBehaviour, IPresenter
 
     private void OnBackClicked()
     {
+        SoundManager.Instance.PlayOneShot(SoundType.ButtonClick);
+
         _view.Hide(0.3f, () =>
         {
             // 1. При выходе назад - ВЫКЛЮЧАЕМ видимость кирпичей
@@ -73,6 +77,7 @@ public class LevelSelectPresenter : MonoBehaviour, IPresenter
 
     private void OnStartClicked()
     {
+        SoundManager.Instance.PlayOneShot(SoundType.ButtonClickStart);
         SceneLoader.Instance.LoadNextScene(GameScene.GameScene);
     }
 

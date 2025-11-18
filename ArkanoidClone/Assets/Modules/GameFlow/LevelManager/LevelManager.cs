@@ -77,8 +77,8 @@ public class LevelManager : MonoBehaviour
         int gCount = geometryChunks != null ? geometryChunks.Count : 0;
         int oCount = obstacleChunks != null ? obstacleChunks.Count : 0;
 
-        Debug.Log($"<color=cyan><b>[LevelGen START]</b></color> Seed: <color=yellow>{seed}</color> || " +
-                  $"Pools: Geo[<color=yellow>{gCount}</color>] Obs[<color=yellow>{oCount}</color>]");
+        ///Debug.Log($"<color=cyan><b>[LevelGen START]</b></color> Seed: <color=yellow>{seed}</color> || " +
+       ///           $"Pools: Geo[<color=yellow>{gCount}</color>] Obs[<color=yellow>{oCount}</color>]");
 
         _prng = new System.Random(seed);
 
@@ -161,7 +161,7 @@ public class LevelManager : MonoBehaviour
 
         // ЛОГ 3: Какие шаблоны выбраны из пула
         string selectedNames = string.Join(", ", uniqueSelection.Select(c => c.name));
-        Debug.Log($"<color=cyan>[LevelGen]</color> Selected Templates: <color=white>{selectedNames}</color>");
+        //Debug.Log($"<color=cyan>[LevelGen]</color> Selected Templates: <color=white>{selectedNames}</color>");
 
         List<BrickChunkSO> finalDistribution = new List<BrickChunkSO>();
 
@@ -207,7 +207,7 @@ public class LevelManager : MonoBehaviour
         if (obstacleChunks == null || obstacleChunks.Count == 0) return;
 
         // Логирование внутри GetDistributedTemplates сработает и здесь
-        Debug.Log($"<color=cyan>[LevelGen]</color> --- Generating Obstacles ---");
+        //Debug.Log($"<color=cyan>[LevelGen]</color> --- Generating Obstacles ---");
         List<BrickChunkSO> templates = GetDistributedTemplates(obstacleChunks, obstacleTemplateCount);
 
         Vector2 currentCenter = transform.position;
@@ -241,7 +241,7 @@ public class LevelManager : MonoBehaviour
 
         if (geometryTemplateCount == 1) chunkB = chunkA;
 
-        Debug.Log($"<color=cyan>[LevelGen Sym]</color> A: {chunkA.name}, B: {chunkB.name}");
+        //Debug.Log($"<color=cyan>[LevelGen Sym]</color> A: {chunkA.name}, B: {chunkB.name}");
 
         BrickChunkSO[] quads = new BrickChunkSO[4];
         bool[] fx = new bool[4];

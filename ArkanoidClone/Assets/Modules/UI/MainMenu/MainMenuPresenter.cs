@@ -37,6 +37,7 @@ public class MainMenuPresenter : MonoBehaviour, IPresenter
 
     private void OnNewGameClicked()
     {
+        SoundManager.Instance.PlayOneShot(SoundType.ButtonClick);
         _view.Hide(0.3f, () =>
         {
             if (_levelSelectPresenter != null)
@@ -47,18 +48,21 @@ public class MainMenuPresenter : MonoBehaviour, IPresenter
     // 1. Нажали кнопку "Exit" -> Показываем попап
     private void OnQuitClicked()
     {
+        SoundManager.Instance.PlayOneShot(SoundType.ButtonClick);
         _view.SetConfirmationActive(true);
     }
 
     // 2. Нажали "Нет" -> Скрываем попап
     private void OnCancelQuit()
     {
+        SoundManager.Instance.PlayOneShot(SoundType.ButtonClick);
         _view.SetConfirmationActive(false);
     }
 
     // 3. Нажали "Да" -> Выходим
     private void OnConfirmQuit()
     {
+        SoundManager.Instance.PlayOneShot(SoundType.ButtonClick);
         Debug.Log("[MainMenu] Quitting Game...");
 
         // Эта конструкция работает и в Редакторе Unity, и в сбилженной игре
