@@ -58,6 +58,11 @@ public class SceneLoader : MonoBehaviour
     // ИЗМЕНЕНО: Корутина теперь принимает GameScene и сама получает имя сцены.
     private IEnumerator LoadSceneAndFade(GameScene scene)
     {
+        if (MusicManager.Instance != null)
+        {
+            MusicManager.Instance.StopMusic();
+        }
+
         string sceneName = GetSceneName(scene); // Получаем строковое имя сцены из enum.
 
         ColoredDebug.CLog(gameObject, "<color=cyan>SceneLoader:</color> Корутина <color=yellow>LoadSceneAndFade</color> запущена для сцены <color=yellow>{0}</color>.", _ColoredDebug, sceneName);

@@ -163,9 +163,6 @@ public class GameManager : MonoBehaviour
         // 5. ВАЖНО: Возвращаем время в норму перед загрузкой!
         Time.timeScale = 1f;
 
-        // 6. Включаем музыку меню обратно (опционально, MusicManager может сам это делать в меню)
-        MusicManager.Instance.PlayMenuMusic();
-
         // 7. Грузим главное меню
         SceneLoader.Instance.LoadNextScene(GameScene.MainMenu);
     }

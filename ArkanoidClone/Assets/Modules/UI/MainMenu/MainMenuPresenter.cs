@@ -15,6 +15,11 @@ public class MainMenuPresenter : MonoBehaviour, IPresenter
         Initialize();
         _view.Show();
 
+        if (MusicManager.Instance != null)
+        {
+            MusicManager.Instance.PlayMenuMusic();
+        }
+
         // При старте игры в главном меню кирпичи не должны быть видны
         if (LevelManager.Instance != null)
         {
