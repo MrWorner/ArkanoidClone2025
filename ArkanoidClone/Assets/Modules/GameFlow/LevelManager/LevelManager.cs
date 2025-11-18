@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using NaughtyAttributes;
-// ВАЖНО: Нам нужен System для System.Random, но чтобы не было конфликта с UnityEngine.Random
-// мы будем использовать полное имя System.Random или псевдоним, но тут проще так:
 using Random = UnityEngine.Random;
 
 #if UNITY_EDITOR
@@ -14,16 +12,26 @@ public class LevelManager : MonoBehaviour
 {
     public static LevelManager Instance { get; private set; }
 
-    // --- ГЛАВНОЕ ИЗМЕНЕНИЕ: ЛИЧНЫЙ ГЕНЕРАТОР ---
-    // Никакой другой скрипт в Unity не сможет повлиять на этот генератор.
+    // --- PRNG ---
     private System.Random _prng;
-    // ------------------------------------------
+
+    private System.Random GetPRNG()
+    {
+        if (_prng == null)
+        {
+            int seed = (GameInstance.Instance != null) ? GameInstance.Instance.CurrentLevelSeed : 12345;
+            _prng = new System.Random(seed);
+            Debug.LogWarning($"[LevelManager] _prng auto-init with seed: {seed}");
+        }
+        return _prng;
+    }
 
     private void Awake()
     {
         if (Instance == null) Instance = this;
         else if (Instance != this) Destroy(gameObject);
 
+        // Сортировка критически важна для детерминизма
         if (geometryChunks != null) geometryChunks.Sort((a, b) => a.name.CompareTo(b.name));
         if (obstacleChunks != null) obstacleChunks.Sort((a, b) => a.name.CompareTo(b.name));
     }
@@ -36,33 +44,23 @@ public class LevelManager : MonoBehaviour
     [SerializeField] private float brickWidth = 0.69333f;
     [SerializeField] private float brickHeight = 0.34666f;
 
-    // ========================================================================
-    // PHASE 1: GEOMETRY
-    // ========================================================================
+    // --- PHASE 1: GEOMETRY ---
     public string geometryPath = "Assets/Modules/Data/Chunks/Geometry";
     [SerializeField] private List<BrickChunkSO> geometryChunks;
-
-    [Range(1, 4)]
-    [SerializeField] private int geometryTemplateCount = 2;
+    [Range(1, 4)][SerializeField] private int geometryTemplateCount = 2;
 
     public enum SymmetryType { MirrorHorizontal, MirrorVertical, MirrorBoth, Chaos }
     [SerializeField] private SymmetryType symmetryMode = SymmetryType.MirrorHorizontal;
-
     [SerializeField] private BrickTypeSO defaultBrickType;
 
-    // ========================================================================
-    // PHASE 2: PAINTING
-    // ========================================================================
+    // --- PHASE 2: PAINTING ---
     [SerializeField] private BrickPaletteSO palette;
     public enum PaintPattern { BottomToTop, LeftToRight, ZebraHorizontal, CenterOut }
     [SerializeField] private PaintPattern paintPattern = PaintPattern.BottomToTop;
 
-    // ========================================================================
-    // PHASE 3: OBSTACLES
-    // ========================================================================
+    // --- PHASE 3: OBSTACLES ---
     [SerializeField] private bool enableObstacles = true;
-    [Range(1, 4)]
-    [SerializeField] private int obstacleTemplateCount = 1;
+    [Range(1, 4)][SerializeField] private int obstacleTemplateCount = 1;
     public string obstaclesPath = "Assets/Modules/Data/Chunks/Obstacles";
     [SerializeField] private List<BrickChunkSO> obstacleChunks;
     [SerializeField] private BrickTypeSO indestructibleType;
@@ -70,15 +68,18 @@ public class LevelManager : MonoBehaviour
     private Brick[,] _spawnedGrid = new Brick[COLS, ROWS];
 
     // ========================================================================
-    // INITIALIZATION & PUBLIC METHODS
+    // PUBLIC METHODS
     // ========================================================================
 
     public void GenerateLevelBySeed(int seed)
     {
-        Debug.Log($"<b>[LevelManager]</b> Generating with System.Random Seed: {seed}");
+        // ЛОГ 1: Проверка входных данных
+        int gCount = geometryChunks != null ? geometryChunks.Count : 0;
+        int oCount = obstacleChunks != null ? obstacleChunks.Count : 0;
 
-        // Инициализируем наш ЛИЧНЫЙ генератор. 
-        // Теперь глобальный UnityEngine.Random.InitState нам не нужен и не помешает.
+        Debug.Log($"<color=cyan><b>[LevelGen START]</b></color> Seed: <color=yellow>{seed}</color> || " +
+                  $"Pools: Geo[<color=yellow>{gCount}</color>] Obs[<color=yellow>{oCount}</color>]");
+
         _prng = new System.Random(seed);
 
         BuildChaosLevel();
@@ -93,7 +94,7 @@ public class LevelManager : MonoBehaviour
     }
 
     // ========================================================================
-    // BUTTONS & EDITOR
+    // BUILDERS
     // ========================================================================
 
     [Button]
@@ -118,18 +119,15 @@ public class LevelManager : MonoBehaviour
     public void BuildLevel()
     {
         if (!ValidateReferences()) return;
-
-        // Если запускаем кнопку из редактора (не через GenerateLevelBySeed), 
-        // _prng может быть null. Создадим временный рандомный.
-        if (_prng == null) _prng = new System.Random();
-
         CleanupOldLevel();
 
         if (symmetryMode == SymmetryType.Chaos)
         {
             var paintValues = System.Enum.GetValues(typeof(PaintPattern));
-            // ЗАМЕНА: Random.Range -> _prng.Next
-            paintPattern = (PaintPattern)paintValues.GetValue(_prng.Next(0, paintValues.Length));
+            paintPattern = (PaintPattern)paintValues.GetValue(GetPRNG().Next(0, paintValues.Length));
+
+            // ЛОГ 2: Выбранный паттерн
+            Debug.Log($"<color=cyan>[LevelGen]</color> PaintPattern: <color=white>{paintPattern}</color>");
 
             GenerateChaosGeometry();
         }
@@ -146,18 +144,24 @@ public class LevelManager : MonoBehaviour
         }
 
         ReportToGameManager();
+        Debug.Log($"<color=cyan><b>[LevelGen FINISH]</b></color>");
     }
 
     // ========================================================================
-    // GENERATION LOGIC (Using _prng)
+    // GENERATION LOGIC
     // ========================================================================
 
     private List<BrickChunkSO> GetDistributedTemplates(List<BrickChunkSO> sourceList, int count)
     {
         int safeCount = Mathf.Min(count, sourceList.Count);
 
-        // ЗАМЕНА: Random.value -> _prng.Next() (для сортировки это даже надежнее)
-        List<BrickChunkSO> uniqueSelection = sourceList.OrderBy(x => _prng.Next()).Take(safeCount).ToList();
+        // Логируем сам процесс выборки, чтобы видеть "сдвиг" рандома
+        // Используем GetPRNG()
+        List<BrickChunkSO> uniqueSelection = sourceList.OrderBy(x => GetPRNG().Next()).Take(safeCount).ToList();
+
+        // ЛОГ 3: Какие шаблоны выбраны из пула
+        string selectedNames = string.Join(", ", uniqueSelection.Select(c => c.name));
+        Debug.Log($"<color=cyan>[LevelGen]</color> Selected Templates: <color=white>{selectedNames}</color>");
 
         List<BrickChunkSO> finalDistribution = new List<BrickChunkSO>();
 
@@ -166,8 +170,7 @@ public class LevelManager : MonoBehaviour
             finalDistribution.Add(uniqueSelection[i % uniqueSelection.Count]);
         }
 
-        // ЗАМЕНА: Random.value -> _prng.Next()
-        return finalDistribution.OrderBy(x => _prng.Next()).ToList();
+        return finalDistribution.OrderBy(x => GetPRNG().Next()).ToList();
     }
 
     private void GenerateChaosGeometry()
@@ -189,9 +192,11 @@ public class LevelManager : MonoBehaviour
             BrickChunkSO chunk = templates[i];
             Vector2Int offset = quadrants[i];
 
-            // ЗАМЕНА: Random.value -> _prng.NextDouble()
-            bool flipX = _prng.NextDouble() > 0.5;
-            bool flipY = _prng.NextDouble() > 0.5;
+            bool flipX = GetPRNG().NextDouble() > 0.5;
+            bool flipY = GetPRNG().NextDouble() > 0.5;
+
+            // ЛОГ 4: Детальная инфа по каждому квадранту
+            Debug.Log($"<color=orange>[Quad {i}]</color> Chunk: <b>{chunk.name}</b> | FlipX: <color=yellow>{flipX}</color> | FlipY: <color=yellow>{flipY}</color>");
 
             SpawnQuadrant(chunk, offset.x, offset.y, flipX, flipY, startPos);
         }
@@ -201,6 +206,8 @@ public class LevelManager : MonoBehaviour
     {
         if (obstacleChunks == null || obstacleChunks.Count == 0) return;
 
+        // Логирование внутри GetDistributedTemplates сработает и здесь
+        Debug.Log($"<color=cyan>[LevelGen]</color> --- Generating Obstacles ---");
         List<BrickChunkSO> templates = GetDistributedTemplates(obstacleChunks, obstacleTemplateCount);
 
         Vector2 currentCenter = transform.position;
@@ -216,30 +223,32 @@ public class LevelManager : MonoBehaviour
             BrickChunkSO chunk = templates[i];
             Vector2Int offset = quadrants[i];
 
-            // ЗАМЕНА: Random.value -> _prng.NextDouble()
-            bool flipX = _prng.NextDouble() > 0.5;
-            bool flipY = _prng.NextDouble() > 0.5;
+            bool flipX = GetPRNG().NextDouble() > 0.5;
+            bool flipY = GetPRNG().NextDouble() > 0.5;
 
             ApplyObstacleQuadrant(chunk, offset.x, offset.y, flipX, flipY, startPos);
         }
     }
 
+    // --- SYMMETRIC GENERATION ---
+
     private void GenerateSymmetricGeometry()
     {
         if (geometryChunks.Count == 0) return;
 
-        // ЗАМЕНА: Random.Range -> _prng.Next
-        BrickChunkSO chunkA = geometryChunks[_prng.Next(0, geometryChunks.Count)];
-        BrickChunkSO chunkB = geometryChunks[_prng.Next(0, geometryChunks.Count)];
+        BrickChunkSO chunkA = geometryChunks[GetPRNG().Next(0, geometryChunks.Count)];
+        BrickChunkSO chunkB = geometryChunks[GetPRNG().Next(0, geometryChunks.Count)];
 
         if (geometryTemplateCount == 1) chunkB = chunkA;
+
+        Debug.Log($"<color=cyan>[LevelGen Sym]</color> A: {chunkA.name}, B: {chunkB.name}");
 
         BrickChunkSO[] quads = new BrickChunkSO[4];
         bool[] fx = new bool[4];
         bool[] fy = new bool[4];
 
         SetupSymmetry(chunkA, chunkB, ref quads, ref fx, ref fy);
-        // ... спавн квадрантов (код без изменений) ...
+
         Vector2 currentCenter = transform.position;
         float totalW = COLS * brickWidth;
         float totalH = ROWS * brickHeight;
@@ -251,14 +260,18 @@ public class LevelManager : MonoBehaviour
         SpawnQuadrant(quads[3], 6, 6, fx[3], fy[3], startPos);
     }
 
-    // ... Остальные методы (SpawnQuadrant, PaintBricksLayer и т.д.) 
-    // НЕ ИСПОЛЬЗУЮТ Random, поэтому их можно оставить без изменений,
-    // либо скопировать из прошлого файла. Главное - методы выше.
+    // --- HELPERS (Оставлены без изменений) ---
+    private void SetupSymmetry(BrickChunkSO A, BrickChunkSO B, ref BrickChunkSO[] tmpl, ref bool[] fx, ref bool[] fy)
+    {
+        switch (symmetryMode)
+        {
+            case SymmetryType.MirrorHorizontal: tmpl[0] = A; fx[0] = false; fy[0] = false; tmpl[1] = A; fx[1] = true; fy[1] = false; tmpl[2] = B; fx[2] = false; fy[2] = false; tmpl[3] = B; fx[3] = true; fy[3] = false; break;
+            case SymmetryType.MirrorVertical: tmpl[0] = A; fx[0] = false; fy[0] = false; tmpl[1] = B; fx[1] = false; fy[1] = false; tmpl[2] = A; fx[2] = false; fy[2] = true; tmpl[3] = B; fx[3] = false; fy[3] = true; break;
+            case SymmetryType.MirrorBoth: tmpl[0] = A; fx[0] = false; fy[0] = false; tmpl[1] = A; fx[1] = true; fy[1] = false; tmpl[2] = A; fx[2] = false; fy[2] = true; tmpl[3] = A; fx[3] = true; fy[3] = true; break;
+            case SymmetryType.Chaos: break;
+        }
+    }
 
-    // ВНИМАНИЕ: Вставь сюда методы SpawnQuadrant, ApplyObstacleQuadrant, PaintBricksLayer, SetupSymmetry, ReportToGameManager, CleanupOldLevel, ValidateReferences 
-    // из твоего предыдущего рабочего кода. Я их сократил, чтобы не дублировать простыню текста.
-
-    // --- Вспомогательные методы (копипаст) ---
     private void SpawnQuadrant(BrickChunkSO chunk, int offsetX, int offsetY, bool flipX, bool flipY, Vector2 startPos)
     {
         if (chunk == null) return;
@@ -274,7 +287,6 @@ public class LevelManager : MonoBehaviour
             float xPos = startPos.x + (col * brickWidth);
             float yPos = startPos.y - (row * brickHeight);
             newBrick.transform.position = new Vector2(xPos, yPos);
-
             if (col >= 0 && col < COLS && row >= 0 && row < ROWS) _spawnedGrid[col, row] = newBrick;
         }
     }
@@ -330,17 +342,6 @@ public class LevelManager : MonoBehaviour
                 int tierIndex = Mathf.RoundToInt(t * (palette.Count - 1));
                 brick.Setup(palette.GetTier(tierIndex));
             }
-        }
-    }
-
-    private void SetupSymmetry(BrickChunkSO A, BrickChunkSO B, ref BrickChunkSO[] tmpl, ref bool[] fx, ref bool[] fy)
-    {
-        switch (symmetryMode)
-        {
-            case SymmetryType.MirrorHorizontal: tmpl[0] = A; fx[0] = false; fy[0] = false; tmpl[1] = A; fx[1] = true; fy[1] = false; tmpl[2] = B; fx[2] = false; fy[2] = false; tmpl[3] = B; fx[3] = true; fy[3] = false; break;
-            case SymmetryType.MirrorVertical: tmpl[0] = A; fx[0] = false; fy[0] = false; tmpl[1] = B; fx[1] = false; fy[1] = false; tmpl[2] = A; fx[2] = false; fy[2] = true; tmpl[3] = B; fx[3] = false; fy[3] = true; break;
-            case SymmetryType.MirrorBoth: tmpl[0] = A; fx[0] = false; fy[0] = false; tmpl[1] = A; fx[1] = true; fy[1] = false; tmpl[2] = A; fx[2] = false; fy[2] = true; tmpl[3] = A; fx[3] = true; fy[3] = true; break;
-            case SymmetryType.Chaos: break;
         }
     }
 
