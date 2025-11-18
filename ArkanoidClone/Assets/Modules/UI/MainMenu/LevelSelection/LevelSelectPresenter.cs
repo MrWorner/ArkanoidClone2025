@@ -4,11 +4,17 @@ using NaughtyAttributes;
 
 public class LevelSelectPresenter : MonoBehaviour, IPresenter
 {
-    [BoxGroup("Dependencies"), SerializeField] private LevelSelectView _view;
+    [BoxGroup("Dependencies"), Required, SerializeField] private LevelSelectView _view;
     // Ссылка на Главное меню, чтобы вернуться назад
-    [BoxGroup("Dependencies"), SerializeField] private MainMenuPresenter _mainMenuPresenter;
+    [BoxGroup("Dependencies"), Required, SerializeField] private MainMenuPresenter _mainMenuPresenter;
+    [BoxGroup("Dependencies"), Required, SerializeField] private GameObject _brickPool;
 
     private LevelSelectionModel _model;
+
+    private void Awake()
+    {
+        _brickPool.SetActive(false);
+    }
 
     private void Start()
     {
@@ -17,6 +23,7 @@ public class LevelSelectPresenter : MonoBehaviour, IPresenter
 
     public void Initialize()
     {
+
         _model = new LevelSelectionModel();
 
         // ДЕМОНСТРАЦИЯ: Проверка на null через паттер matching
@@ -41,9 +48,17 @@ public class LevelSelectPresenter : MonoBehaviour, IPresenter
         LogMethodNamesViaReflection();
     }
 
-    public void Show() => _view.Show();
-    public void Hide() => _view.Hide();
+    public void Show()
+    {
+        _view.Show();
+        _brickPool.SetActive(true);
+    }
 
+    public void Hide()
+    {
+        _brickPool.SetActive(false);
+        _view.Hide();
+    }
     #region Logic Handlers
 
     private void ChangeLevel(int amount)
@@ -67,6 +82,9 @@ public class LevelSelectPresenter : MonoBehaviour, IPresenter
         _view.Hide(0.3f, () =>
         {
             // Логика возврата в главное меню
+
+            _brickPool.SetActive(false);
+
             if (_mainMenuPresenter != null)
                 _mainMenuPresenter.Show();
         });
