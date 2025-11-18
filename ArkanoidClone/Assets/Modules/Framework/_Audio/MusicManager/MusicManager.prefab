@@ -47,7 +47,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   musicSource: {fileID: 1589483790}
   gameplayMusic: []
-  menuMusic: []
+  menuMusic:
+  - {fileID: 8300000, guid: 72c8d603e5f5de54cb822d7135cfd52a, type: 3}
   victoryMusic: {fileID: 0}
   gameOverMusic: {fileID: 0}
   maxVolume: 0.5

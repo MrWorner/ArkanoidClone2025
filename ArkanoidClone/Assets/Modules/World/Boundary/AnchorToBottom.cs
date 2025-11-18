@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using miniit.CORE;
+using UnityEngine;
 
 // Этот скрипт все еще "прибивает" себя к низу,
 // но теперь он также работает как ТРИГГЕР
