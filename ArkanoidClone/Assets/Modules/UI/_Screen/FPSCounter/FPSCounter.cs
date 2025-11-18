@@ -11,7 +11,6 @@ public class FPSCounter : MonoBehaviour
 
     #region Поля
     [BoxGroup("SETTINGS"), SerializeField] private float _updateInterval = 0.5f;
-    [BoxGroup("DEBUG"), SerializeField] protected bool _ColoredDebug;
     #endregion Поля
 
     #region Свойства
@@ -26,14 +25,11 @@ public class FPSCounter : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         if (_fpsText == null)
         {
-            ColoredDebug.CLog(gameObject, "<color=#FF6347>FPSCounter:</color> Отсутствует ссылка на текстовый компонент <color=yellow>_fpsText</color>! Скрипт будет отключен.", _ColoredDebug);
-            DebugUtils.LogMissingReference(this, nameof(_fpsText));
             enabled = false;
             return;
         }
 
         _timeLeft = _updateInterval;
-        ColoredDebug.CLog(gameObject, "<color=lime>FPSCounter:</color> Успешная инициализация. Интервал обновления: <color=cyan>{0}</color> сек.", _ColoredDebug, _updateInterval);
     }
 
     private void Update()

@@ -12,11 +12,6 @@ public enum GameScene
 
 public class SceneLoader : MonoBehaviour
 {
-    #region Поля
-    //[BoxGroup("DEBUG"), SerializeField, ReadOnly] private GameScene _sceneToLoad;
-    [BoxGroup("DEBUG"), SerializeField] protected bool _ColoredDebug;
-
-    #endregion
 
     #region Свойства
     private static SceneLoader _instance;
@@ -30,14 +25,12 @@ public class SceneLoader : MonoBehaviour
     {
         if (_instance != null && _instance != this)
         {
-            ColoredDebug.CLog(gameObject, "<color=#FF6347>SceneLoader:</color> Найден дубликат. Уничтожаю лишний экземпляр <color=yellow>{0}</color>.", _ColoredDebug, name);
             Destroy(gameObject);
         }
         else
         {
             _instance = this;
             DontDestroyOnLoad(gameObject);
-            ColoredDebug.CLog(gameObject, "<color=lime>SceneLoader:</color> Успешная инициализация синглтона.", _ColoredDebug);
         }
     }
     #endregion
@@ -66,16 +59,13 @@ public class SceneLoader : MonoBehaviour
 
         string sceneName = GetSceneName(scene); // Получаем строковое имя сцены из enum.
 
-        ColoredDebug.CLog(gameObject, "<color=cyan>SceneLoader:</color> Корутина <color=yellow>LoadSceneAndFade</color> запущена для сцены <color=yellow>{0}</color>.", _ColoredDebug, sceneName);
         if (ScreenFader.Instance != null)
         {
-            ColoredDebug.CLog(gameObject, "<color=cyan>SceneLoader:</color> Показываю экран загрузки.", _ColoredDebug);
             ScreenFader.Instance.ShowLoadingScreen();
             //yield return new WaitForSeconds(0.5f);
             yield return new WaitForSeconds(1f);
         }
 
-        ColoredDebug.CLog(gameObject, "<color=cyan>SceneLoader:</color> Начинаю асинхронную загрузку сцены <color=yellow>{0}</color>.", _ColoredDebug, sceneName);
         AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(sceneName);
         asyncLoad.allowSceneActivation = false;
 
@@ -83,21 +73,17 @@ public class SceneLoader : MonoBehaviour
         {
             if (asyncLoad.progress >= 0.9f)
             {
-                ColoredDebug.CLog(gameObject, "<color=lime>SceneLoader:</color> Сцена <color=yellow>{0}</color> загружена. Разрешаю активацию.", _ColoredDebug, sceneName);
                 asyncLoad.allowSceneActivation = true;
             }
             yield return null;
         }
 
-        ColoredDebug.CLog(gameObject, "<color=lime>SceneLoader:</color> Асинхронная загрузка сцены <color=yellow>{0}</color> полностью завершена.", _ColoredDebug, sceneName);
 
         if (ScreenFader.Instance != null)
         {
-            ColoredDebug.CLog(gameObject, "<color=cyan>SceneLoader:</color> Скрываю экран загрузки.", _ColoredDebug);
             ScreenFader.Instance.HideLoadingScreen();
         }
 
-        ColoredDebug.CLog(gameObject, "<color=cyan>SceneLoader:</color> Корутина <color=yellow>LoadSceneAndFade</color> завершила свою работу.", _ColoredDebug);
     }
 
     private string GetSceneName(GameScene scene)

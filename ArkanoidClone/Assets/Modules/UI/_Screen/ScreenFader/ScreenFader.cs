@@ -19,7 +19,6 @@ public class ScreenFader : MonoBehaviour
     [BoxGroup("SETTINGS"), SerializeField, Range(0.1f, 2.0f)] private float _rotationDuration = 0.5f;
     [BoxGroup("SETTINGS"), SerializeField, Range(0.0f, 1.0f)] private float _rotationPause = 0.1f;
     [BoxGroup("DEBUG"), SerializeField, ReadOnly] private Sequence _hourglassSequence;
-    [BoxGroup("DEBUG"), SerializeField] protected bool _coloredDebug;
     #endregion
 
     #region Свойства
@@ -37,10 +36,6 @@ public class ScreenFader : MonoBehaviour
         }
         _instance = this;
         DontDestroyOnLoad(gameObject);
-
-        if (_loadingCanvasGroup == null) DebugUtils.LogMissingReference(this, nameof(_loadingCanvasGroup));
-        if (_hourglassIconTransform == null) DebugUtils.LogMissingReference(this, nameof(_hourglassIconTransform));
-        if (_loadingText == null) DebugUtils.LogMissingReference(this, nameof(_loadingText));
 
         DOTween.Init();
 
@@ -64,7 +59,6 @@ public class ScreenFader : MonoBehaviour
     public void ShowLoadingScreen(float duration)
     {
         if (_loadingCanvasGroup == null) return;
-        ColoredDebug.CLog(gameObject, "<color=cyan>ScreenFader:</color> Плавно показываю экран загрузки за <color=yellow>{0}</color> сек.", _coloredDebug, duration);
         _hourglassIconTransform.rotation = new Quaternion();
         _loadingCanvasGroup.DOKill();
         _loadingCanvasGroup.interactable = true;
@@ -81,7 +75,6 @@ public class ScreenFader : MonoBehaviour
     public void HideLoadingScreen(float duration)
     {
         if (_loadingCanvasGroup == null) return;
-        ColoredDebug.CLog(gameObject, "<color=cyan>ScreenFader:</color> Плавно скрываю экран загрузки за <color=yellow>{0}</color> сек.", _coloredDebug, duration);
         StopHourglassAnimation();
         _loadingCanvasGroup.DOKill();
         _loadingCanvasGroup.interactable = false;
@@ -94,7 +87,6 @@ public class ScreenFader : MonoBehaviour
     private void StartHourglassAnimation()
     {
         if (_hourglassIconTransform == null) return;
-        ColoredDebug.CLog(gameObject, "<color=cyan>ScreenFader:</color> Запускаю анимацию песочных часов. Длительность: <color=yellow>{0}</color>, Пауза: <color=yellow>{1}</color>.", _coloredDebug, _rotationDuration, _rotationPause);
         StopHourglassAnimation();
         _hourglassIconTransform.localRotation = Quaternion.identity;
         _hourglassSequence = DOTween.Sequence();
@@ -108,7 +100,6 @@ public class ScreenFader : MonoBehaviour
     private void StopHourglassAnimation()
     {
         if (_hourglassSequence == null || !_hourglassSequence.IsActive()) return;
-        ColoredDebug.CLog(gameObject, "<color=cyan>ScreenFader:</color> Останавливаю анимацию песочных часов.", _coloredDebug);
         _hourglassSequence?.Kill();
         _hourglassIconTransform?.DOKill();
     }
