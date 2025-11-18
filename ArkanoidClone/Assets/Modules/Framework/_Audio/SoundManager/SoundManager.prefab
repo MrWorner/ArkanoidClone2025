@@ -44,9 +44,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 231522f3f5ba07643a99983e02102557, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _sfxVolume: 1
-  _oneShotPoolSize: 5
-  _soundEffects:
+  sfxVolume: 1
+  oneShotPoolSize: 15
+  soundEffects:
   - type: 1
     clips:
     - {fileID: 8300000, guid: 66b2a45fd361b114c82e46d9c9f6fee3, type: 3}
@@ -96,4 +96,3 @@ MonoBehaviour:
     clips:
     - {fileID: 8300000, guid: dae57924164376a45a43ec9d70f1c738, type: 3}
     volumeMultiplier: 0.33
-  _ColoredDebug: 0

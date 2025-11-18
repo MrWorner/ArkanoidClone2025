@@ -1,175 +1,186 @@
-﻿using NaughtyAttributes;
+﻿using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
+using NaughtyAttributes;
 
-/// <summary>
-/// Типы звуковых эффектов для Arkanoid.
-/// </summary>
-public enum SoundType
+namespace MiniIT.AUDIO
 {
-    None,
-
-    // UI
-    ButtonClick,
-
-    // Геймплей - Мяч и Физика
-    PaddleHit,      // Удар о ракетку
-    WallHit,        // Удар о стену (опционально)
-    BallLost,       // Мяч улетел в дно
-
-    // Геймплей - Кирпичи
-    BrickHit,       // Удар по кирпичу (если он не разрушился, а треснул)
-    BrickDestroyed, // Кирпич уничтожен
-    IndestructibleHit, // Удар по неубиваемому (дзынь!)
-
-    // Геймплей - События
-    PowerUpPickup,  // Взятие бонуса
-    LifeLost,       // Потеря жизни
-    LevelComplete,  // Победа
-    GameOver,        // Поражение
-    ButtonClickStart,
-}
-
-[System.Serializable]
-public class SoundEffect
-{
-    public SoundType type;
-    [Tooltip("Можно назначить несколько клипов, будет выбираться случайный")]
-    public AudioClip[] clips;
-    [Range(0f, 2f)] public float volumeMultiplier = 1f;
-}
-
-public class SoundManager : MonoBehaviour
-{
-    #region Поля
-    [BoxGroup("SETTINGS"), Tooltip("Основная громкость для всех SFX."), Range(0f, 1f), SerializeField]
-    private float _sfxVolume = 1f;
-
-    [BoxGroup("SETTINGS"), Tooltip("Размер пула для одновременных звуков"), SerializeField]
-    private int _oneShotPoolSize = 15;
-
-    [BoxGroup("SETTINGS/Sound List"), SerializeField]
-    private List<SoundEffect> _soundEffects = new List<SoundEffect>();
-
-    [BoxGroup("DEBUG"), SerializeField] protected bool _ColoredDebug;
-
-    private static SoundManager _instance;
-    private List<AudioSource> _oneShotSources;
-    #endregion Поля
-
-    #region Свойства
-    public static SoundManager Instance { get => _instance; }
-    #endregion Свойства
-
-    #region Методы UNITY
-    private void Awake()
-    {
-        if (_instance != null)
-        {
-            ColoredDebug.CLog(gameObject, "<color=orange>[SYSTEM]</color> Найден дубликат SoundManager. Удаляю: <color=yellow>{0}</color>", _ColoredDebug, gameObject.name);
-            Destroy(gameObject); // Если менеджер уже есть, удаляем этот объект
-            return;
-        }
-
-        _instance = this;
-        DontDestroyOnLoad(gameObject); // Чтобы музыка не прерывалась при смене сцен
-
-        ColoredDebug.CLog(gameObject, "<color=cyan>[INFO]</color> Инициализация SoundManager...", _ColoredDebug);
-        InitAudioSources();
-    }
-    #endregion Методы UNITY
-
-    #region Публичные методы
     /// <summary>
-    /// Воспроизводит звуковой эффект.
+    /// Defines types of sound effects available in the game.
     /// </summary>
-    public void PlayOneShot(SoundType type)
+    public enum SoundType
     {
-        ColoredDebug.CLog(gameObject, "<color=lime>[ACTION]</color> Запрос на проигрывание звука: <color=yellow>{0}</color>", _ColoredDebug, type);
+        None,
 
-        if (type == SoundType.None)
-        {
-            ColoredDebug.CLog(gameObject, "<color=grey>[DEBUG]</color> Тип звука 'None', пропускаем.", _ColoredDebug);
-            return;
-        }
+        ButtonClick,
 
-        SoundEffect effect = _soundEffects.FirstOrDefault(e => e.type == type);
+        PaddleHit,
+        WallHit,
+        BallLost,
 
-        if (effect == null)
-        {
-            ColoredDebug.CLog(gameObject, "<color=red>[ERROR]</color> Звуковой эффект <color=yellow>{0}</color> не найден в списке настроек!", _ColoredDebug, type);
-            return;
-        }
+        BrickHit,
+        BrickDestroyed,
+        IndestructibleHit,
 
-        if (effect.clips == null || effect.clips.Length == 0)
-        {
-            ColoredDebug.CLog(gameObject, "<color=red>[ERROR]</color> Для эффекта <color=yellow>{0}</color> не назначены аудиоклипы!", _ColoredDebug, type);
-            return;
-        }
+        PowerUpPickup,
+        LifeLost,
+        LevelComplete,
+        GameOver,
 
-        // Выбираем случайный клип (вариативность)
-        AudioClip clip = effect.clips[Random.Range(0, effect.clips.Length)];
-
-        if (clip == null)
-        {
-            ColoredDebug.CLog(gameObject, "<color=red>[ERROR]</color> Один из клипов для <color=yellow>{0}</color> пустой (null)!", _ColoredDebug, type);
-            return;
-        }
-
-        // Берем свободный источник
-        AudioSource source = GetAvailableOneShotSource();
-
-        if (source != null)
-        {
-            // Расчет питча (опционально можно добавить вариативность pitch)
-            source.pitch = 1f;
-            float finalVolume = _sfxVolume * effect.volumeMultiplier;
-
-            ColoredDebug.CLog(gameObject, "<color=cyan>[INFO]</color> Проигрываю клип: <color=white>{0}</color>. Громкость: <color=yellow>{1}</color>", _ColoredDebug, clip.name, finalVolume);
-
-            source.PlayOneShot(clip, finalVolume);
-        }
-        else
-        {
-            ColoredDebug.CLog(gameObject, "<color=red>[ERROR]</color> Не удалось получить AudioSource для проигрывания!", _ColoredDebug);
-        }
-    }
-    #endregion Публичные методы
-
-    #region Личные методы
-    private void InitAudioSources()
-    {
-        _oneShotSources = new List<AudioSource>();
-        for (int i = 0; i < _oneShotPoolSize; i++)
-        {
-            CreateSource();
-        }
-        ColoredDebug.CLog(gameObject, "<color=orange>[SYSTEM]</color> Создан пул аудио источников. Размер: <color=yellow>{0}</color>", _ColoredDebug, _oneShotPoolSize);
+        ButtonClickStart,
     }
 
-    private AudioSource CreateSource()
+    [System.Serializable]
+    public class SoundEffect
     {
-        AudioSource source = gameObject.AddComponent<AudioSource>();
-        source.loop = false;
-        source.playOnAwake = false;
-        _oneShotSources.Add(source);
-        return source;
+        public SoundType type;
+
+        [Tooltip("One of these clips will be selected randomly.")]
+        public AudioClip[] clips;
+
+        [Range(0f, 2f)]
+        public float volumeMultiplier = 1f;
     }
 
-    private AudioSource GetAvailableOneShotSource()
+    public class SoundManager : MonoBehaviour
     {
-        foreach (var source in _oneShotSources)
+        // ========================================================================
+        // --- PROPERTIES ---
+        // ========================================================================
+
+        public static SoundManager Instance
         {
-            if (!source.isPlaying)
+            get;
+            private set;
+        }
+
+        // ========================================================================
+        // --- SERIALIZED FIELDS ---
+        // ========================================================================
+
+        [BoxGroup("SETTINGS")]
+        [Tooltip("Master volume for SFX.")]
+        [Range(0f, 1f)]
+        [SerializeField]
+        private float sfxVolume = 1f;
+
+        [BoxGroup("SETTINGS")]
+        [Tooltip("Initial size of the AudioSource pool.")]
+        [SerializeField]
+        private int oneShotPoolSize = 15;
+
+        [BoxGroup("SETTINGS")]
+        [SerializeField]
+        private List<SoundEffect> soundEffects = new List<SoundEffect>();
+
+        // ========================================================================
+        // --- PRIVATE FIELDS ---
+        // ========================================================================
+
+        private List<AudioSource> oneShotSources = new List<AudioSource>();
+
+        // ========================================================================
+        // --- PUBLIC METHODS ---
+        // ========================================================================
+
+        /// <summary>
+        /// Plays a sound effect by type.
+        /// </summary>
+        public void PlayOneShot(SoundType type)
+        {
+            if (type == SoundType.None)
             {
-                return source;
+                return;
+            }
+
+            SoundEffect effect = soundEffects.FirstOrDefault(e => e.type == type);
+
+            if (effect == null)
+            {
+                Debug.LogWarning($"[SoundManager] Effect not found in settings: {type}");
+                return;
+            }
+
+            if (effect.clips == null || effect.clips.Length == 0)
+            {
+                Debug.LogWarning($"[SoundManager] No clips assigned for: {type}");
+                return;
+            }
+
+            // Select random clip for variation
+            AudioClip clip = effect.clips[Random.Range(0, effect.clips.Length)];
+
+            if (clip == null)
+            {
+                Debug.LogError($"[SoundManager] Clip is null for: {type}");
+                return;
+            }
+
+            // Get free source
+            AudioSource source = GetAvailableOneShotSource();
+
+            if (source != null)
+            {
+                source.pitch = 1f;
+                float finalVolume = sfxVolume * effect.volumeMultiplier;
+                source.PlayOneShot(clip, finalVolume);
+            }
+            else
+            {
+                Debug.LogError("[SoundManager] Failed to get AudioSource!");
             }
         }
 
-        ColoredDebug.CLog(gameObject, "<color=orange>[SYSTEM]</color> Все источники заняты. Расширяю пул (+1).", _ColoredDebug);
-        // Если все заняты - создаем новый (расширяем пул)
-        return CreateSource();
+        // ========================================================================
+        // --- PRIVATE METHODS & UNITY CALLBACKS ---
+        // ========================================================================
+
+        private void Awake()
+        {
+            if (Instance != null)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+
+            InitAudioSources();
+        }
+
+        private void InitAudioSources()
+        {
+            oneShotSources = new List<AudioSource>();
+
+            for (int i = 0; i < oneShotPoolSize; i++)
+            {
+                CreateSource();
+            }
+        }
+
+        private AudioSource CreateSource()
+        {
+            AudioSource source = gameObject.AddComponent<AudioSource>();
+            source.loop = false;
+            source.playOnAwake = false;
+            oneShotSources.Add(source);
+            return source;
+        }
+
+        private AudioSource GetAvailableOneShotSource()
+        {
+            foreach (AudioSource source in oneShotSources)
+            {
+                if (!source.isPlaying)
+                {
+                    return source;
+                }
+            }
+
+            Debug.Log("[SoundManager] Pool exhausted. Expanding...");
+            // Expand pool if all are busy
+            return CreateSource();
+        }
     }
-    #endregion
 }
