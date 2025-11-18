@@ -1,58 +1,82 @@
-﻿// GameHUDView.cs
+﻿using UnityEngine;
+using TMPro;
+using NaughtyAttributes;
 
-using UnityEngine;
-using TMPro; // Убедитесь, что используете TextMeshPro
-
-/// <summary>
-/// Представление (View) для постоянного отображения игровой статистики (Score, Lives, Level).
-/// Наследует MonoBehaviour, может быть прикреплен к общему Canvas.
-/// </summary>
-public class GameHUDView : MonoBehaviour
+namespace MiniIT.UI
 {
-    [Header("Элементы HUD")]
-    [SerializeField] private TextMeshProUGUI scoreText;
-    [SerializeField] private TextMeshProUGUI livesText;
-    [SerializeField] private TextMeshProUGUI levelText;
-
-    private void Start()
-    {
-        // Проверка ссылок на текст
-        if (scoreText == null || livesText == null || levelText == null)
-        {
-            Debug.LogError("GameHUDView: Не назначены все ссылки на TextMeshProUGUI в инспекторе!", this);
-        }
-    }
-
     /// <summary>
-    /// Обновляет отображение текущего счета.
+    /// View responsible for displaying persistent game statistics (Score, Lives, Level).
     /// </summary>
-    public void UpdateScore(int score)
+    public class GameHUDView : MonoBehaviour
     {
-        if (scoreText != null)
-        {
-            scoreText.text = $"Score: {score:N0}"; // Форматирование для красивого отображения больших чисел
-        }
-    }
+        // ========================================================================
+        // --- SERIALIZED FIELDS ---
+        // ========================================================================
 
-    /// <summary>
-    /// Обновляет отображение текущего количества жизней.
-    /// </summary>
-    public void UpdateLives(int lives)
-    {
-        if (livesText != null)
-        {
-            livesText.text = $"Lives: {lives}";
-        }
-    }
+        [BoxGroup("HUD ELEMENTS")]
+        [SerializeField, Required]
+        private TextMeshProUGUI scoreText = null;
 
-    /// <summary>
-    /// Обновляет отображение текущего уровня.
-    /// </summary>
-    public void UpdateLevel(int level)
-    {
-        if (levelText != null)
+        [BoxGroup("HUD ELEMENTS")]
+        [SerializeField, Required]
+        private TextMeshProUGUI livesText = null;
+
+        [BoxGroup("HUD ELEMENTS")]
+        [SerializeField, Required]
+        private TextMeshProUGUI levelText = null;
+
+        // ========================================================================
+        // --- PUBLIC METHODS ---
+        // ========================================================================
+
+        /// <summary>
+        /// Updates the score display.
+        /// </summary>
+        /// <param name="score">Current score value.</param>
+        public void UpdateScore(int score)
         {
-            levelText.text = $"Level: {level}";
+            if (scoreText != null)
+            {
+                // Format with thousands separator (N0)
+                scoreText.text = $"Score: {score:N0}";
+            }
+        }
+
+        /// <summary>
+        /// Updates the lives display.
+        /// </summary>
+        /// <param name="lives">Current lives count.</param>
+        public void UpdateLives(int lives)
+        {
+            if (livesText != null)
+            {
+                livesText.text = $"Lives: {lives}";
+            }
+        }
+
+        /// <summary>
+        /// Updates the level display.
+        /// </summary>
+        /// <param name="level">Current level index.</param>
+        public void UpdateLevel(int level)
+        {
+            if (levelText != null)
+            {
+                levelText.text = $"Level: {level}";
+            }
+        }
+
+        // ========================================================================
+        // --- PRIVATE METHODS ---
+        // ========================================================================
+
+        private void Start()
+        {
+            // Validate references
+            if (scoreText == null || livesText == null || levelText == null)
+            {
+                Debug.LogError("GameHUDView: Missing TextMeshProUGUI references in Inspector!", this);
+            }
         }
     }
 }

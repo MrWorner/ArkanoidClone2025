@@ -1,52 +1,61 @@
-﻿using NaughtyAttributes;
+﻿using UnityEngine;
 using TMPro;
-using UnityEngine;
+using NaughtyAttributes;
 
-
-public class FPSCounter : MonoBehaviour
+namespace MiniIT.UI
 {
-    #region Поля: Required
-    [BoxGroup("Required"), Required, SerializeField] private TextMeshProUGUI _fpsText;
-    #endregion Поля: Required
-
-    #region Поля
-    [BoxGroup("SETTINGS"), SerializeField] private float _updateInterval = 0.5f;
-    #endregion Поля
-
-    #region Свойства
-    private float _accumulatedFrames = 0;
-    private float _timeLeft;
-    private int _lastFPS;
-    #endregion Свойства
-
-    #region Методы UNITY
-    private void Start()
+    public class FPSCounter : MonoBehaviour
     {
-        DontDestroyOnLoad(gameObject);
-        if (_fpsText == null)
+        // ========================================================================
+        // --- SERIALIZED FIELDS ---
+        // ========================================================================
+
+        [BoxGroup("REQUIRED")]
+        [SerializeField, Required]
+        private TextMeshProUGUI fpsText = null;
+
+        [BoxGroup("SETTINGS")]
+        [SerializeField]
+        private float updateInterval = 0.5f;
+
+        // ========================================================================
+        // --- PRIVATE FIELDS ---
+        // ========================================================================
+
+        private float accumulatedFrames = 0;
+        private float timeLeft = 0f;
+        private int lastFPS = 0;
+
+        // ========================================================================
+        // --- PRIVATE METHODS & UNITY CALLBACKS ---
+        // ========================================================================
+
+        private void Start()
         {
-            enabled = false;
-            return;
+            DontDestroyOnLoad(gameObject);
+
+            if (fpsText == null)
+            {
+                enabled = false;
+                return;
+            }
+
+            timeLeft = updateInterval;
         }
 
-        _timeLeft = _updateInterval;
-    }
-
-    private void Update()
-    {
-        _timeLeft -= Time.unscaledDeltaTime;
-        _accumulatedFrames++;
-
-        if (_timeLeft <= 0.0f)
+        private void Update()
         {
-            _lastFPS = (int)(_accumulatedFrames / _updateInterval);
-            _fpsText.text = "FPS: " + _lastFPS;
+            timeLeft -= Time.unscaledDeltaTime;
+            accumulatedFrames++;
 
-            ///ColoredDebug.CLog(gameObject, "<color=cyan>FPSCounter:</color> Обновление значения. Текущий FPS: <color=yellow>{0}</color>.", _ColoredDebug, _lastFPS);
+            if (timeLeft <= 0.0f)
+            {
+                lastFPS = (int)(accumulatedFrames / updateInterval);
+                fpsText.text = "FPS: " + lastFPS;
 
-            _timeLeft = _updateInterval;
-            _accumulatedFrames = 0;
+                timeLeft = updateInterval;
+                accumulatedFrames = 0;
+            }
         }
     }
-    #endregion Методы UNITY
 }
